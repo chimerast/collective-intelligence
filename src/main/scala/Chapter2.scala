@@ -1,7 +1,6 @@
 import scala.collection.mutable._
 import scala.collection.JavaConversions._
 import scala.math._
-import del.icio.us.Delicious
 
 object Chapter2 extends App {
   val critics = Map(
@@ -100,16 +99,16 @@ object Chapter2 extends App {
    * person以外の全ユーザの評点の重み付き平均を使い、personへの推薦を算出する
    */
   def getRecommendations(prefs: Prefs, person: String, similarity: Similarity = simPearson): List[(Double, String)] = {
-    val totals = Map[String, Double]()
-    val simSums = Map[String, Double]()
+    val totals = Map[String, Double]().withDefaultValue(0.0)
+    val simSums = Map[String, Double]().withDefaultValue(0.0)
     prefs.keys.toList.filter(person !=).map(other => (similarity(prefs, person, other), other)).filter(_._1 > 0.0).foreach {
       case (sim, other) =>
         // まだ見ていない映画の得点のみを算出
         prefs(other).keys.toList.filter(!prefs(person).contains(_)).foreach { item =>
           // 類似度 * スコア
-          totals(item) = totals.getOrElse(item, 0.0) + prefs(other)(item) * sim
+          totals(item) += prefs(other)(item) * sim
           // 類似度を合計
-          simSums(item) = simSums.getOrElse(item, 0.0) + sim
+          simSums(item) += sim
         }
     }
 
@@ -129,9 +128,8 @@ object Chapter2 extends App {
    * ディクショナリの構造を転置
    */
   def transformPrefs(prefs: Prefs): Prefs = {
-    val result = Map[String, Map[String, Double]]()
+    val result = Map[String, Map[String, Double]]().withDefaultValue(Map[String, Double]())
     for (person <- prefs.keys; item <- prefs(person).keys) {
-      result.getOrElseUpdate(item, Map[String, Double]())
       // itemとpersonを入れ替える
       result(item)(person) = prefs(person)(item)
     }

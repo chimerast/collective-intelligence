@@ -22,9 +22,9 @@
     </dependency>
 
     <dependency>
-      <groupId>net.sf.delicious-java</groupId>
-      <artifactId>delicious</artifactId>
-      <version>1.14</version>
+      <groupId>rome</groupId>
+      <artifactId>modules</artifactId>
+      <version>0.3.2</version>
     </dependency>
   </dependencies>
 
