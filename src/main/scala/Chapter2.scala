@@ -1,6 +1,7 @@
 import scala.collection.mutable._
 import scala.collection.JavaConversions._
 import scala.math._
+import scala.util._
 
 object Chapter2 extends App {
   val critics = Map(
@@ -128,8 +129,9 @@ object Chapter2 extends App {
    * ディクショナリの構造を転置
    */
   def transformPrefs(prefs: Prefs): Prefs = {
-    val result = Map[String, Map[String, Double]]().withDefaultValue(Map[String, Double]())
+    val result = Map[String, Map[String, Double]]()
     for (person <- prefs.keys; item <- prefs(person).keys) {
+      result.getOrElseUpdate(item, Map[String, Double]())
       // itemとpersonを入れ替える
       result(item)(person) = prefs(person)(item)
     }
@@ -140,5 +142,61 @@ object Chapter2 extends App {
     val movies = transformPrefs(critics)
     println(topMatches(movies, "Superman Returns"))
     println(getRecommendations(movies, "Just My Luck"))
+  }
+
+  System.exit(0)
+
+  import Delicious._
+
+  Section("2.6.1 del.icio.usのAPI") {
+    println(getPopular("programming").flatMap(_.get("description")).mkString(","))
+  }
+
+  /**
+   * tagに関する人気のリンクを投稿したユーザを取得
+   */
+  def initializeUserDict(tag: String, count: Int = 5): List[String] = {
+    // popularな投稿をcount番目まで取得
+    for (p1 <- getPopular(tag).take(count); p2 <- getUrlPosts(p1("url"))) yield p2("user")
+  }
+
+  /**
+   * usersによって投稿されたリンクを集める
+   */
+  def fillItems(users: List[String]): Map[String, Map[String, Double]] = {
+    val allItems = Set[String]()
+
+    // すべてのユーザによって投稿されたリンクを取得
+    val userDict = Map(users.map { user =>
+      val dict = getUserPosts(user).map { post =>
+        val url = post("url")
+        allItems += url
+        url -> 1.0
+      }
+      (user -> Map(dict: _*))
+    }: _*)
+
+    // 空のアイテムを0で埋める
+    for (dict <- userDict.values; url <- allItems) {
+      dict.getOrElseUpdate(url, 0.0)
+    }
+
+    userDict
+  }
+
+  val count = 5
+  val delusers = initializeUserDict("programming", count)
+  val delitems = fillItems(delusers)
+
+  Section("2.6.2 データセットを作る") {
+    println(delitems.take(1))
+  }
+
+  Section("2.6.3 ご近所さんとリンクの推薦") {
+    val user = delusers(Random.nextInt(delusers.size))
+    println(user)
+    println(topMatches(delitems, user))
+
+    println(getRecommendations(delitems, user, similarity = simDistance))
   }
 }

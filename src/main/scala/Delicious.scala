@@ -1,6 +1,7 @@
 import scala.collection.JavaConversions._
 
 import java.net.URL
+import java.security.MessageDigest
 import java.{ util => ju }
 
 import com.sun.syndication.io._
@@ -12,7 +13,7 @@ object Delicious {
   def getRss(tag: String = "", popular: Boolean = false, url: String = "", user: String = ""): List[Map[String, String]] = {
     val rssurl =
       if (url != "") {
-        DLCS_RSS + "url/%s" format url
+        DLCS_RSS + "url/%s" format md5(url)
       } else if (user != "" && tag != "") {
         DLCS_RSS + "%s/%s" format (user, tag)
       } else if (user != "" && tag == "") {
@@ -43,7 +44,15 @@ object Delicious {
     }
   }
 
-  def getPopular(tag: String = ""): List[Map[String, String]] = {
-    getRss(tag = tag, popular = true)
+  def getPopular(tag: String = ""): List[Map[String, String]] = getRss(tag = tag, popular = true)
+  def getUrlPosts(url: String): List[Map[String, String]] = getRss(url = url)
+  def getUserPosts(user: String): List[Map[String, String]] = getRss(user = user)
+
+  def md5(str: String): String = {
+    val md5 = MessageDigest.getInstance("MD5")
+    md5.reset()
+    md5.update(str.getBytes("UTF-8"))
+
+    md5.digest().map(0xFF & _).map("%02x".format(_)).mkString
   }
 }
