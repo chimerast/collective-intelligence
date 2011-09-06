@@ -10,6 +10,11 @@ object Delicious {
 
   val DLCS_RSS = "http://feeds.delicious.com/v2/json/"
 
+  val PARAM_USER = "a"
+  val PARAM_URL = "u"
+  val PARAM_TAGS = "t"
+  val PARAM_TITLE = "d"
+
   def getRss(tag: String = "", popular: Boolean = false, url: String = "", user: String = "", count: Int = 30): List[Map[String, String]] = {
     val rssurl =
       (if (url != "") {
