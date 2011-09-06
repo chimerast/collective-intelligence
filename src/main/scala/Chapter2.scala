@@ -105,12 +105,14 @@ object Chapter2 extends App {
     prefs.keys.toList.filter(person !=).map(other => (similarity(prefs, person, other), other)).filter(_._1 > 0.0).foreach {
       case (sim, other) =>
         // まだ見ていない映画の得点のみを算出
-        prefs(other).keys.toList.filter(!prefs(person).contains(_)).foreach { item =>
-          // 類似度 * スコア
-          totals(item) += prefs(other)(item) * sim
-          // 類似度を合計
-          simSums(item) += sim
-        }
+        prefs(other).keys.toList
+          .filter(item => (!prefs(person).contains(item)) || prefs(person)(item) == 0.0)
+          .foreach { item =>
+            // 類似度 * スコア
+            totals(item) += prefs(other)(item) * sim
+            // 類似度を合計
+            simSums(item) += sim
+          }
     }
 
     // 正規化したリストを作る
@@ -144,12 +146,10 @@ object Chapter2 extends App {
     println(getRecommendations(movies, "Just My Luck"))
   }
 
-  System.exit(0)
-
   import Delicious._
 
   Section("2.6.1 del.icio.usのAPI") {
-    println(getPopular("programming").flatMap(_.get("description")).mkString(","))
+    getPopular("programming").take(5).foreach(println)
   }
 
   /**
@@ -157,7 +157,7 @@ object Chapter2 extends App {
    */
   def initializeUserDict(tag: String, count: Int = 5): List[String] = {
     // popularな投稿をcount番目まで取得
-    for (p1 <- getPopular(tag).take(count); p2 <- getUrlPosts(p1("url"))) yield p2("user")
+    for (p1 <- getPopular(tag, count); p2 <- getUrlPosts(p1("u"))) yield p2("a")
   }
 
   /**
@@ -169,7 +169,7 @@ object Chapter2 extends App {
     // すべてのユーザによって投稿されたリンクを取得
     val userDict = Map(users.map { user =>
       val dict = getUserPosts(user).map { post =>
-        val url = post("url")
+        val url = post("u")
         allItems += url
         url -> 1.0
       }
@@ -184,8 +184,8 @@ object Chapter2 extends App {
     userDict
   }
 
-  val count = 5
-  val delusers = initializeUserDict("programming", count)
+  val count = 1
+  val delusers = initializeUserDict("web", count)
   val delitems = fillItems(delusers)
 
   Section("2.6.2 データセットを作る") {
@@ -197,6 +197,6 @@ object Chapter2 extends App {
     println(user)
     println(topMatches(delitems, user))
 
-    println(getRecommendations(delitems, user, similarity = simDistance))
+    println(getRecommendations(delitems, user).take(5))
   }
 }

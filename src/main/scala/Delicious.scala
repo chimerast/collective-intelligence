@@ -1,18 +1,18 @@
 import scala.collection.JavaConversions._
+import scala.io._
+import scala.util.parsing.json._
 
 import java.net.URL
-import java.security.MessageDigest
 import java.{ util => ju }
 
-import com.sun.syndication.io._
-import com.sun.syndication.feed.synd._
-
 object Delicious {
-  val DLCS_RSS = "http://feeds.delicious.com/rss/"
+  import Utils._
 
-  def getRss(tag: String = "", popular: Boolean = false, url: String = "", user: String = ""): List[Map[String, String]] = {
+  val DLCS_RSS = "http://feeds.delicious.com/v2/json/"
+
+  def getRss(tag: String = "", popular: Boolean = false, url: String = "", user: String = "", count: Int = 30): List[Map[String, String]] = {
     val rssurl =
-      if (url != "") {
+      (if (url != "") {
         DLCS_RSS + "url/%s" format md5(url)
       } else if (user != "" && tag != "") {
         DLCS_RSS + "%s/%s" format (user, tag)
@@ -28,31 +28,28 @@ object Delicious {
         DLCS_RSS + "popular/%s" format tag
       } else {
         ""
-      }
+      }) + "?count=" + count
 
-    val rss = new SyndFeedInput().build(new XmlReader(new URL(rssurl)))
+    val json = using(Source.fromURL(rssurl, "UTF-8")) { source =>
+      JSON.parseFull(source.mkString)
+    }
 
-    rss.getEntries.asInstanceOf[ju.List[SyndEntry]].toList.map { e =>
-      Map(
-        "url" -> Option(e.getLink),
-        "description" -> Option(e.getTitle),
-        "tags" -> Option(e.getCategories.asInstanceOf[ju.List[SyndCategory]]).map(_.map(_.getName).mkString(",")),
-        "dt" -> Option(e.getUpdatedDate).map(_.toGMTString),
-        "extended" -> Option(e.getDescription).map(_.getValue),
-        "user" -> Option(e.getAuthor))
-        .flatMap { case (key, value) => value.map(key -> _) }
+    json match {
+      case Some(list: List[Map[String, AnyRef]]) =>
+        list.map { map =>
+          map.map {
+            case (key, value: String) =>
+              (key, value)
+            case (key, value: List[String]) =>
+              (key, value.mkString("[", ", ", "]"))
+          }
+        }
+      case _ =>
+        throw new IllegalStateException()
     }
   }
 
-  def getPopular(tag: String = ""): List[Map[String, String]] = getRss(tag = tag, popular = true)
-  def getUrlPosts(url: String): List[Map[String, String]] = getRss(url = url)
-  def getUserPosts(user: String): List[Map[String, String]] = getRss(user = user)
-
-  def md5(str: String): String = {
-    val md5 = MessageDigest.getInstance("MD5")
-    md5.reset()
-    md5.update(str.getBytes("UTF-8"))
-
-    md5.digest().map(0xFF & _).map("%02x".format(_)).mkString
-  }
+  def getPopular(tag: String = "", count: Int = 30): List[Map[String, String]] = getRss(tag = tag, popular = true, count = count)
+  def getUrlPosts(url: String, count: Int = 30): List[Map[String, String]] = getRss(url = url, count = count)
+  def getUserPosts(user: String, count: Int = 30): List[Map[String, String]] = getRss(user = user, count = count)
 }
