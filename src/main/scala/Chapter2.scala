@@ -196,27 +196,26 @@ object Chapter2 extends App {
     userDict
   }
 
-  val delusers = initializeUserDict("programming", 3)
-  val delitems = fillItems(delusers)
-
-  section("2.6.2 データセットを作る") {
+  val delusers = section("2.6.2 データセットを作る") {
     subsection("del.icio.usから人気のprogrammingのURLをブックマークしたユーザを抜いてくる")
-    delitems.take(5).foreach(output)
+    val delusers = fillItems(initializeUserDict("programming", 3))
+    delusers.take(5).foreach(output)
+    delusers
   }
 
   section("2.6.3 ご近所さんとリンクの推薦") {
     subsection("ユーザーに似た嗜好のユーザを探す")
-    val user = delusers(Random.nextInt(delusers.size))
+    val user = delusers.keys.toList(Random.nextInt(delusers.size))
     output("ユーザ名: " + user)
-    output(topMatches(delitems, user))
+    output(topMatches(delusers, user))
 
     subsection("ユーザが好みそうなリンクを探す")
-    output(getRecommendations(delitems, user))
+    output(getRecommendations(delusers, user))
 
     subsection("特定のリンクに似たリンクを探す")
-    var url = getRecommendations(delitems, user)(0)._2
+    var url = getRecommendations(delusers, user)(0)._2
     output("URL: " + url)
-    output(topMatches(transformPrefs(delitems), url))
+    output(topMatches(transformPrefs(delusers), url))
   }
 
   type ItemMatch = Map[String, List[(Double, String)]]
@@ -237,10 +236,10 @@ object Chapter2 extends App {
     }.seq
   }
 
-  val itemsim = calculateSimilarItems(critics)
-
-  section("2.7.1 アイテム間の類似度のデータセットを作る") {
+  val itemsim = section("2.7.1 アイテム間の類似度のデータセットを作る") {
+    val itemsim = calculateSimilarItems(critics)
     itemsim.foreach(output)
+    itemsim
   }
 
   /**
@@ -311,5 +310,4 @@ object Chapter2 extends App {
     val itemsim = calculateSimilarItems(prefs, n = 50)
     getRecommendedItems(prefs, itemsim, "87", n = 5).foreach(output)
   }
-
 }
