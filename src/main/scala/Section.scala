@@ -1,7 +1,11 @@
 object Section {
-  def apply(title: String)(content: => Unit) {
-    println("** " + title)
+  def section(title: String)(content: => Unit) {
+    println("## " + title)
     content
     println()
+  }
+
+  def subsection(title: String) {
+    println("### " + title)
   }
 }

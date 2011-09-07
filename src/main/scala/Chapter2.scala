@@ -1,7 +1,10 @@
 import scala.collection.mutable._
 import scala.collection.JavaConversions._
+import scala.io._
 import scala.math._
 import scala.util._
+import Section._
+import Utils._
 
 object Chapter2 extends App {
   val critics = Map(
@@ -31,13 +34,13 @@ object Chapter2 extends App {
     1.0 / (1.0 + sumOfSquares)
   }
 
-  Section("2.3.1 ユークリッド距離によるスコア") {
-    println("sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))")
+  section("2.3.1 ユークリッド距離によるスコア") {
+    subsection("sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))")
     println(sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))
-    println("1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))")
+    subsection("1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))")
     println(1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))))
 
-    println("Lisa RoseとGene Seymourのユークリッド距離")
+    subsection("Lisa RoseとGene Seymourのユークリッド距離")
     println(simDistance(critics, "Lisa Rose", "Gene Seymour"))
   }
 
@@ -71,8 +74,8 @@ object Chapter2 extends App {
     num / den
   }
 
-  Section("2.3.2 ピアソン相関によるスコア") {
-    println("Lisa RoseとGene Seymourのピアソン相関")
+  section("2.3.2 ピアソン相関によるスコア") {
+    subsection("Lisa RoseとGene Seymourのピアソン相関")
     println(simPearson(critics, "Lisa Rose", "Gene Seymour"))
   }
 
@@ -84,7 +87,8 @@ object Chapter2 extends App {
    * http://en.wikipedia.org/wiki/Metric_(mathematics)#Examples
    */
 
-  Section("2.3.4 評者をランキングする") {
+  section("2.3.4 評者をランキングする") {
+    subsection("Tobyに似た評者を探す")
     topMatches(critics, "Toby", n = 3).foreach(println)
   }
 
@@ -125,10 +129,10 @@ object Chapter2 extends App {
     rankings.sortBy(_._1).reverse.take(n)
   }
 
-  Section("2.4 アイテムを推薦する") {
-    println("ピアソン相関でToby用の商品を推薦")
+  section("2.4 アイテムを推薦する") {
+    subsection("ピアソン相関でToby用の商品を推薦")
     getRecommendations(critics, "Toby").foreach(println)
-    println("ユークリッド距離でToby用の商品を推薦")
+    subsection("ユークリッド距離でToby用の商品を推薦")
     getRecommendations(critics, "Toby", similarity = simDistance).foreach(println)
   }
 
@@ -145,18 +149,18 @@ object Chapter2 extends App {
     result
   }
 
-  Section("2.5 似ている商品") {
+  section("2.5 似ている商品") {
     val movies = transformPrefs(critics)
-    println("Superman Returnsに似ている商品を探す")
+    subsection("Superman Returnsに似ている商品を探す")
     topMatches(movies, "Superman Returns").foreach(println)
-    println("Just My Luckを見ていない評者の中で高い評価をつけそうな人を予測する")
+    subsection("Just My Luckを見ていない評者の中で高い評価をつけそうな人を予測する")
     getRecommendations(movies, "Just My Luck").foreach(println)
   }
 
   import Delicious._
 
-  Section("2.6.1 del.icio.usのAPI") {
-    println("programmingに関する人気のブックマーク")
+  section("2.6.1 del.icio.usのAPI") {
+    subsection("programmingに関する人気のブックマーク")
     getPopular("programming").take(5).foreach(println)
   }
 
@@ -196,21 +200,21 @@ object Chapter2 extends App {
   val delusers = initializeUserDict("programming", count)
   val delitems = fillItems(delusers)
 
-  Section("2.6.2 データセットを作る") {
-    println("del.icio.usから人気のprogrammingのURLをブックマークしたユーザを抜いてくる")
+  section("2.6.2 データセットを作る") {
+    subsection("del.icio.usから人気のprogrammingのURLをブックマークしたユーザを抜いてくる")
     delitems.take(5).foreach(println)
   }
 
-  Section("2.6.3 ご近所さんとリンクの推薦") {
-    println("ユーザーに似た嗜好のユーザを探す")
+  section("2.6.3 ご近所さんとリンクの推薦") {
+    subsection("ユーザーに似た嗜好のユーザを探す")
     val user = delusers(Random.nextInt(delusers.size))
     println("ユーザ名: " + user)
     println(topMatches(delitems, user))
 
-    println("ユーザが好みそうなリンクを探す")
+    subsection("ユーザが好みそうなリンクを探す")
     println(getRecommendations(delitems, user))
 
-    println("特定のリンクに似たリンクを探す")
+    subsection("特定のリンクに似たリンクを探す")
     var url = getRecommendations(delitems, user)(0)._2
     println("URL: " + url)
     println(topMatches(transformPrefs(delitems), url))
@@ -226,19 +230,17 @@ object Chapter2 extends App {
     // 嗜好の行列をアイテム中心な形に反転させる
     val itemPrefs = transformPrefs(prefs)
 
-    Map(itemPrefs.zip(Stream.from(1)).map {
-      case ((item, _), c) =>
-        // 巨大なデータセット用にステータスを表示
-        if (c % 100 == 0) println("%d / %d" format (c, itemPrefs.size))
+    itemPrefs.par.map {
+      case (item, _) =>
         // このアイテムに最も似ているアイテムたちを探す
         val scores = topMatches(itemPrefs, item, n = n, similarity = similarity)
         (item -> scores)
-    }.toList: _*)
+    }.seq
   }
 
   val itemsim = calculateSimilarItems(critics)
 
-  Section("2.7.1 アイテム間の類似度のデータセットを作る") {
+  section("2.7.1 アイテム間の類似度のデータセットを作る") {
     itemsim.foreach(println)
   }
 
@@ -267,7 +269,48 @@ object Chapter2 extends App {
     rankings.sortBy(_._1).reverse.take(n)
   }
 
-  Section("2.7.2 推薦を行う") {
+  section("2.7.2 推薦を行う") {
+    subsection("アイテムベースの表からToby向け推薦を行う")
     getRecommendedItems(critics, itemsim, "Toby").foreach(println)
   }
+
+  /**
+   * MovieLensのデータセットを読み込む
+   */
+  def loadMovieLens(path: String = "ml-100k"): Map[String, Map[String, Double]] = {
+    implicit val codec = Codec.string2codec("ISO-8859-9")
+
+    // 映画のタイトルを得る
+    val movies = using(Source.fromFile(path + "/u.item")) { source =>
+      source.getLines.map { line =>
+        val Array(item, title, _@ _*) = line.split("\\|")
+        (item -> title)
+      }.toMap
+    }
+
+    // データの読み込み
+    using(Source.fromFile(path + "/u.data")) { source =>
+      val prefs = Map[String, Map[String, Double]]()
+      source.getLines.foreach { line =>
+        val Array(user, movieid, rating, ts, _@ _*) = line.split("\t")
+        prefs.getOrElseUpdate(user, Map[String, Double]())
+        prefs(user)(movies(movieid)) = rating.toDouble
+      }
+      prefs
+    }
+  }
+
+  section("2.8 MovieLensのデータセットを使う") {
+    val prefs = loadMovieLens()
+    subsection("87番のユーザの評価を出力")
+    prefs.take(4).foreach(println)
+
+    subsection("87番のユーザベースの推薦")
+    getRecommendations(prefs, "87").foreach(println)
+
+    subsection("アイテムベースの推薦")
+    val itemsim = calculateSimilarItems(prefs, n = 50)
+    getRecommendedItems(prefs, itemsim, "87", n = 5).foreach(println)
+  }
+
 }
