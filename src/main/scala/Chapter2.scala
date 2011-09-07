@@ -169,7 +169,9 @@ object Chapter2 extends App {
    */
   def initializeUserDict(tag: String, count: Int = 5): List[String] = {
     // popularな投稿をcount番目まで取得
-    for (p1 <- getPopular(tag, count); p2 <- getUrlPosts(p1(Delicious.PARAM_URL))) yield p2(Delicious.PARAM_USER)
+    val users = for (p1 <- getPopular(tag, count); p2 <- getUrlPosts(p1(Delicious.PARAM_URL)))
+      yield p2(Delicious.PARAM_USER)
+    users.toSet.toList
   }
 
   /**
@@ -197,9 +199,11 @@ object Chapter2 extends App {
   }
 
   val delusers = section("2.6.2 データセットを作る") {
-    subsection("del.icio.usから人気のprogrammingのURLをブックマークしたユーザを抜いてくる")
-    val delusers = fillItems(initializeUserDict("programming", 3))
-    delusers.take(5).foreach(output)
+    subsection("del.icio.usからprogrammingタグの人気のURLをブックマークしたユーザを抜いてくる")
+    val users = initializeUserDict("programming", 3)
+    output(users)
+    val delusers = fillItems(users)
+    delusers.take(5).foreach(m => output(m._1 + ": " + m._2.take(5).mkString("Map(", ", ", ", ...)")))
     delusers
   }
 
@@ -301,7 +305,7 @@ object Chapter2 extends App {
   section("2.8 MovieLensのデータセットを使う") {
     val prefs = loadMovieLens()
     subsection("87番のユーザの評価を出力")
-    prefs.take(4).foreach(output)
+    prefs.take(5).foreach(m => output(m._1 + ": " + m._2.take(5).mkString("Map(", ", ", ", ...)")))
 
     subsection("87番のユーザベースの推薦")
     getRecommendations(prefs, "87").foreach(output)
@@ -309,5 +313,82 @@ object Chapter2 extends App {
     subsection("アイテムベースの推薦")
     val itemsim = calculateSimilarItems(prefs, n = 50)
     getRecommendedItems(prefs, itemsim, "87", n = 5).foreach(output)
+  }
+
+  /**
+   * Tanimoto係数によるスコア
+   */
+  def simTanimoto(prefs: Prefs, p1: String, p2: String): Double = {
+    // 両者が互いに評価しているアイテムのリストを取得
+    val si = prefs(p1).keys.toList.filter(prefs(p2).contains)
+    val n = si.size
+
+    // 共に評価しているアイテムがなければ0を返す
+    if (n == 0) return 0.0
+
+    // 平方を合計する
+    val sum1Sq = si.map(prefs(p1)).map(pow(_, 2)).sum
+    val sum2Sq = si.map(prefs(p2)).map(pow(_, 2)).sum
+
+    // 積を合計する
+    val pSum = si.map(i => prefs(p1)(i) * prefs(p2)(i)).sum
+
+    // ピアソンによるスコアを計算する
+    val num = pSum
+    val den = sum1Sq + sum2Sq - pSum
+    if (den == 0.0) return 0.0
+
+    num / den
+  }
+
+  section("2.10.1 Tanimoto係数") {
+    subsection("Tanimoto係数でToby用の商品を推薦")
+    getRecommendations(critics, "Toby", similarity = simTanimoto).foreach(output)
+  }
+
+  /**
+   * タグを集める
+   */
+  def initializeTagDict(tag: String, count: Int = 5): List[String] = {
+    // popularな投稿をcount番目まで取得
+    val tags = for (p1 <- getPopular(tag, count); p2 <- getUrlPosts(p1(Delicious.PARAM_URL)))
+      yield p2(Delicious.PARAM_TAGS).split("\\|").filter(""!=)
+    tags.flatten.toSet.toList
+  }
+
+  /**
+   * タグに投稿されたリンクを集める
+   */
+  def fillItemsByTag(tags: List[String]): Map[String, Map[String, Double]] = {
+    val allItems = Set[String]()
+
+    // すべてのタグがついたリンクを取得
+    val tagDict = Map(tags.map { tag =>
+      val dict = getPopular(tag).map { post =>
+        val url = post(Delicious.PARAM_URL)
+        allItems += url
+        url -> 1.0
+      }
+      (tag -> Map(dict: _*))
+    }: _*)
+
+    // 空のアイテムを0で埋める
+    for (dict <- tagDict.values; url <- allItems) {
+      dict.getOrElseUpdate(url, 0.0)
+    }
+
+    tagDict
+  }
+
+  section("2.10.2 タグの類似性") {
+    subsection("del.icio.usからprogrammingタグの人気のURLについているタグを抜いてくる")
+    val tags = initializeTagDict("programming", 3)
+    output(tags)
+    val deltags = fillItemsByTag(tags)
+    deltags.take(5).foreach(m => output(m._1 + ": " + m._2.take(5).mkString("Map(", ", ", ", ...)")))
+    subsection("howtoに似たタグを探す")
+    output(topMatches(deltags, "howto"))
+    subsection("programmingタグのついていない似たリンクを探す")
+    getRecommendations(deltags, "programming").foreach(output)
   }
 }

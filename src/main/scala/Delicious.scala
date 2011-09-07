@@ -46,7 +46,7 @@ object Delicious {
             case (key, value: String) =>
               (key, value)
             case (key, value: List[String]) =>
-              (key, value.mkString("[", ", ", "]"))
+              (key, value.mkString("|"))
           }
         }
       case _ =>
