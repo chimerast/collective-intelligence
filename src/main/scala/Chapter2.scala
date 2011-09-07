@@ -36,12 +36,12 @@ object Chapter2 extends App {
 
   section("2.3.1 ユークリッド距離によるスコア") {
     subsection("sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))")
-    println(sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))
+    output(sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))
     subsection("1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))")
-    println(1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))))
+    output(1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))))
 
     subsection("Lisa RoseとGene Seymourのユークリッド距離")
-    println(simDistance(critics, "Lisa Rose", "Gene Seymour"))
+    output(simDistance(critics, "Lisa Rose", "Gene Seymour"))
   }
 
   /**
@@ -76,7 +76,7 @@ object Chapter2 extends App {
 
   section("2.3.2 ピアソン相関によるスコア") {
     subsection("Lisa RoseとGene Seymourのピアソン相関")
-    println(simPearson(critics, "Lisa Rose", "Gene Seymour"))
+    output(simPearson(critics, "Lisa Rose", "Gene Seymour"))
   }
 
   /*
@@ -89,7 +89,7 @@ object Chapter2 extends App {
 
   section("2.3.4 評者をランキングする") {
     subsection("Tobyに似た評者を探す")
-    topMatches(critics, "Toby", n = 3).foreach(println)
+    topMatches(critics, "Toby", n = 3).foreach(output)
   }
 
   // 評価関数
@@ -131,9 +131,9 @@ object Chapter2 extends App {
 
   section("2.4 アイテムを推薦する") {
     subsection("ピアソン相関でToby用の商品を推薦")
-    getRecommendations(critics, "Toby").foreach(println)
+    getRecommendations(critics, "Toby").foreach(output)
     subsection("ユークリッド距離でToby用の商品を推薦")
-    getRecommendations(critics, "Toby", similarity = simDistance).foreach(println)
+    getRecommendations(critics, "Toby", similarity = simDistance).foreach(output)
   }
 
   /**
@@ -152,16 +152,16 @@ object Chapter2 extends App {
   section("2.5 似ている商品") {
     val movies = transformPrefs(critics)
     subsection("Superman Returnsに似ている商品を探す")
-    topMatches(movies, "Superman Returns").foreach(println)
+    topMatches(movies, "Superman Returns").foreach(output)
     subsection("Just My Luckを見ていない評者の中で高い評価をつけそうな人を予測する")
-    getRecommendations(movies, "Just My Luck").foreach(println)
+    getRecommendations(movies, "Just My Luck").foreach(output)
   }
 
   import Delicious._
 
   section("2.6.1 del.icio.usのAPI") {
     subsection("programmingに関する人気のブックマーク")
-    getPopular("programming").take(5).foreach(println)
+    getPopular("programming").take(5).foreach(output)
   }
 
   /**
@@ -196,28 +196,27 @@ object Chapter2 extends App {
     userDict
   }
 
-  val count = 1
-  val delusers = initializeUserDict("programming", count)
+  val delusers = initializeUserDict("programming", 3)
   val delitems = fillItems(delusers)
 
   section("2.6.2 データセットを作る") {
     subsection("del.icio.usから人気のprogrammingのURLをブックマークしたユーザを抜いてくる")
-    delitems.take(5).foreach(println)
+    delitems.take(5).foreach(output)
   }
 
   section("2.6.3 ご近所さんとリンクの推薦") {
     subsection("ユーザーに似た嗜好のユーザを探す")
     val user = delusers(Random.nextInt(delusers.size))
-    println("ユーザ名: " + user)
-    println(topMatches(delitems, user))
+    output("ユーザ名: " + user)
+    output(topMatches(delitems, user))
 
     subsection("ユーザが好みそうなリンクを探す")
-    println(getRecommendations(delitems, user))
+    output(getRecommendations(delitems, user))
 
     subsection("特定のリンクに似たリンクを探す")
     var url = getRecommendations(delitems, user)(0)._2
-    println("URL: " + url)
-    println(topMatches(transformPrefs(delitems), url))
+    output("URL: " + url)
+    output(topMatches(transformPrefs(delitems), url))
   }
 
   type ItemMatch = Map[String, List[(Double, String)]]
@@ -241,7 +240,7 @@ object Chapter2 extends App {
   val itemsim = calculateSimilarItems(critics)
 
   section("2.7.1 アイテム間の類似度のデータセットを作る") {
-    itemsim.foreach(println)
+    itemsim.foreach(output)
   }
 
   /**
@@ -271,7 +270,7 @@ object Chapter2 extends App {
 
   section("2.7.2 推薦を行う") {
     subsection("アイテムベースの表からToby向け推薦を行う")
-    getRecommendedItems(critics, itemsim, "Toby").foreach(println)
+    getRecommendedItems(critics, itemsim, "Toby").foreach(output)
   }
 
   /**
@@ -303,14 +302,14 @@ object Chapter2 extends App {
   section("2.8 MovieLensのデータセットを使う") {
     val prefs = loadMovieLens()
     subsection("87番のユーザの評価を出力")
-    prefs.take(4).foreach(println)
+    prefs.take(4).foreach(output)
 
     subsection("87番のユーザベースの推薦")
-    getRecommendations(prefs, "87").foreach(println)
+    getRecommendations(prefs, "87").foreach(output)
 
     subsection("アイテムベースの推薦")
     val itemsim = calculateSimilarItems(prefs, n = 50)
-    getRecommendedItems(prefs, itemsim, "87", n = 5).foreach(println)
+    getRecommendedItems(prefs, itemsim, "87", n = 5).foreach(output)
   }
 
 }

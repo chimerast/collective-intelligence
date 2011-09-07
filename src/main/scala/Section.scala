@@ -8,4 +8,8 @@ object Section {
   def subsection(title: String) {
     println("### " + title)
   }
+
+  def output(line: Any) {
+    println("    " + line)
+  }
 }
