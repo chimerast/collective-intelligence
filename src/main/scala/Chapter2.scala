@@ -23,22 +23,25 @@ object Chapter2 extends App {
    * ユークリッド距離によるスコア
    */
   def simDistance(prefs: Prefs, p1: String, p2: String): Double = {
-    // 両者共に評価しているものが一つも無ければ0を返す
-    if (!prefs(p1).keys.exists(prefs(p2).contains)) return 0.0
+    // 両者が互いに評価しているアイテムのリストを取得
+    val si = prefs(p1).keys.toList.filter(prefs(p2).contains)
+    val n = si.size
+
+    // 共に評価しているアイテムがなければ0を返す
+    if (n == 0) return 0.0
 
     // ユークリッド距離を算出
-    val sumOfSquares = prefs(p1).filter(i => prefs(p2).contains(i._1))
-      .map(i => pow(i._2 - prefs(p2)(i._1), 2)).sum
+    val sumOfSquares = si.map(i => pow(prefs(p1)(i) - prefs(p2)(i), 2)).sum
 
     // 0.0〜1.0に納めるための計算
-    1.0 / (1.0 + sumOfSquares)
+    1.0 / (1.0 + sqrt(sumOfSquares))
   }
 
   section("2.3.1 ユークリッド距離によるスコア") {
-    subsection("sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))")
-    output(sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))
-    subsection("1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2)))")
-    output(1 / (1 + sqrt(pow(5 - 4, 2) + pow(4 - 1, 2))))
+    subsection("sqrt(pow(4.5 - 4, 2) + pow(1 - 2, 2))")
+    output(sqrt(pow(4.5 - 4, 2) + pow(1 - 2, 2)))
+    subsection("1 / (1 + sqrt(pow(4.5 - 4, 2) + pow(1 - 2, 2)))")
+    output(1 / (1 + sqrt(pow(4.5 - 4, 2) + pow(1 - 2, 2))))
 
     subsection("Lisa RoseとGene Seymourのユークリッド距離")
     output(simDistance(critics, "Lisa Rose", "Gene Seymour"))
