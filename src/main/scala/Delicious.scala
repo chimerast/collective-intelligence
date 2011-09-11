@@ -2,7 +2,6 @@ import scala.collection.JavaConversions._
 import scala.io._
 import scala.util.parsing.json._
 
-import java.net.URL
 import java.{ util => ju }
 
 object Delicious {
@@ -35,11 +34,7 @@ object Delicious {
         ""
       }) + "?count=" + count
 
-    val json = using(Source.fromURL(rssurl, "UTF-8")) { source =>
-      JSON.parseFull(source.mkString)
-    }
-
-    json match {
+    fetchData(rssurl) match {
       case Some(list: List[Map[String, AnyRef]]) =>
         list.map { map =>
           map.map {
@@ -57,4 +52,8 @@ object Delicious {
   def getPopular(tag: String = "", count: Int = 30): List[Map[String, String]] = getRss(tag = tag, popular = true, count = count)
   def getUrlPosts(url: String, count: Int = 30): List[Map[String, String]] = getRss(url = url, count = count)
   def getUserPosts(user: String, count: Int = 30): List[Map[String, String]] = getRss(user = user, count = count)
+
+  private def fetchData(rssurl: String): Option[Any] = {
+    DiskStore.load(using(Source.fromURL(rssurl, "UTF-8")) { source => JSON.parseFull(source.mkString) }, rssurl)
+  }
 }

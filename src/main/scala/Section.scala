@@ -1,5 +1,5 @@
 object Section {
-  val from = (0, 0)
+  val from = (2, 10)
 
   def section[T](title: String)(content: => T): T = {
     val Array(chapter, section) = title.split("(\\.| )").take(2).map(_.toInt)

@@ -201,7 +201,7 @@ object Chapter2 extends App {
   val delusers = section("2.6.2 データセットを作る") {
     subsection("del.icio.usからprogrammingタグの人気のURLをブックマークしたユーザを抜いてくる")
     val users = initializeUserDict("programming", 3)
-    output(users)
+    output(users.take(5).mkString("List(", ",", ")"))
     val delusers = fillItems(users)
     delusers.take(5).foreach(m => output(m._1 + ": " + m._2.take(5).mkString("Map(", ", ", ", ...)")))
     delusers
@@ -222,13 +222,13 @@ object Chapter2 extends App {
     output(topMatches(transformPrefs(delusers), url))
   }
 
-  type ItemMatch = Map[String, List[(Double, String)]]
+  type Match = Map[String, List[(Double, String)]]
 
   /**
    * アイテムをキーとして持ち、それぞれのアイテムに似ている
    * アイテムのリストを値として持つディクショナリを作る。
    */
-  def calculateSimilarItems(prefs: Prefs, n: Int = 10, similarity: Similarity = simDistance): ItemMatch = {
+  def calculateSimilarItems(prefs: Prefs, n: Int = 10, similarity: Similarity = simDistance): Match = {
     // 嗜好の行列をアイテム中心な形に反転させる
     val itemPrefs = transformPrefs(prefs)
 
@@ -249,7 +249,7 @@ object Chapter2 extends App {
   /**
    * 推薦を行う
    */
-  def getRecommendedItems(prefs: Prefs, itemMatch: ItemMatch, user: String, n: Int = 5): List[(Double, String)] = {
+  def getRecommendedItems(prefs: Prefs, itemMatch: Match, user: String, n: Int = 5): List[(Double, String)] = {
     val userRatings = prefs(user)
     val scores = Map[String, Double]().withDefaultValue(0.0)
     val totalSim = Map[String, Double]().withDefaultValue(0.0)
@@ -333,7 +333,7 @@ object Chapter2 extends App {
     // 積を合計する
     val pSum = si.map(i => prefs(p1)(i) * prefs(p2)(i)).sum
 
-    // ピアソンによるスコアを計算する
+    // Tanimoto係数によるスコアを計算する
     val num = pSum
     val den = sum1Sq + sum2Sq - pSum
     if (den == 0.0) return 0.0
@@ -342,6 +342,10 @@ object Chapter2 extends App {
   }
 
   section("2.10.1 Tanimoto係数") {
+    subsection("ピアソン相関でToby用の商品を推薦")
+    getRecommendations(critics, "Toby").foreach(output)
+    subsection("ユークリッド距離でToby用の商品を推薦")
+    getRecommendations(critics, "Toby", similarity = simDistance).foreach(output)
     subsection("Tanimoto係数でToby用の商品を推薦")
     getRecommendations(critics, "Toby", similarity = simTanimoto).foreach(output)
   }
@@ -383,12 +387,52 @@ object Chapter2 extends App {
   section("2.10.2 タグの類似性") {
     subsection("del.icio.usからprogrammingタグの人気のURLについているタグを抜いてくる")
     val tags = initializeTagDict("programming", 3)
-    output(tags)
+    output(tags.take(5).mkString("List(", ",", ")"))
     val deltags = fillItemsByTag(tags)
     deltags.take(5).foreach(m => output(m._1 + ": " + m._2.take(5).mkString("Map(", ", ", ", ...)")))
-    subsection("howtoに似たタグを探す")
-    output(topMatches(deltags, "howto"))
+    subsection("referenceに似たタグを探す")
+    output(topMatches(deltags, "reference"))
     subsection("programmingタグのついていない似たリンクを探す")
     getRecommendations(deltags, "programming").foreach(output)
+  }
+
+  def calculateSimilarUsers(prefs: Prefs, n: Int = 10, similarity: Similarity = simDistance): Match = {
+    prefs.par.map {
+      case (item, _) =>
+        // このアイテムに最も似ているアイテムたちを探す
+        val scores = topMatches(prefs, item, n = n, similarity = similarity)
+        (item -> scores)
+    }.seq
+  }
+
+  def getRecommendedUsers(prefs: Prefs, userMatch: Match, item: String, n: Int = 5): List[(Double, String)] = {
+    val itemRatings = prefs(item)
+    val scores = Map[String, Double]().withDefaultValue(0.0)
+    val totalSim = Map[String, Double]().withDefaultValue(0.0)
+
+    for (
+      (user, rating) <- itemRatings;
+      (similarity, user2) <- userMatch(user) if !itemRatings.contains(user2)
+    ) {
+      // 評点と類似度を掛け合わせたものの合計で重み付けする
+      scores(user2) += similarity * rating
+      // 全ての類似度の合計
+      totalSim(user2) += similarity
+    }
+
+    // 正規化のため、それぞれの重み付けしたスコアを類似度の合計で割る
+    val rankings = scores.toList.map { case (user, score) => (score / totalSim(user), user) }
+
+    // 降順にランキングを返す
+    rankings.sortBy(_._1).reverse.take(n)
+  }
+
+  section("2.10.3 ユーザベースの効率化") {
+    subsection("ユーザ間の類似度のデータセットを作る")
+    val usersim = calculateSimilarUsers(critics)
+    usersim.foreach(output)
+    val itemPrefs = transformPrefs(critics)
+    subsection("Lady in the Waterを見ていない人で高い評価をつけそうな人を")
+    getRecommendedUsers(itemPrefs, usersim, "Just My Luck").foreach(output)
   }
 }
