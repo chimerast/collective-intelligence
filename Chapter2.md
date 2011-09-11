@@ -138,7 +138,7 @@
     (Claudia Puig,List((0.5358983848622454,Michael Phillips), (0.38742588672279304,Lisa Rose), (0.3567891723253309,Toby), (0.32037724101704074,Jack Matthews), (0.31451985913875646,Mick LaSalle), (0.28172904669025317,Gene Seymour)))
     (Mick LaSalle,List((0.4142135623730951,Lisa Rose), (0.4,Toby), (0.38742588672279304,Michael Phillips), (0.31451985913875646,Claudia Puig), (0.2857142857142857,Jack Matthews), (0.27792629762666365,Gene Seymour)))
     (Lisa Rose,List((0.4721359549995794,Michael Phillips), (0.4142135623730951,Mick LaSalle), (0.38742588672279304,Claudia Puig), (0.3483314773547883,Toby), (0.3405424265831667,Jack Matthews), (0.29429805508554946,Gene Seymour)))
-### Lady in the Waterを見ていない人で高い評価をつけそうな人を
+### Just My Luckを見ていない人で高い評価をつけそうな人を
     (2.482581708640552,Michael Phillips)
     (2.422482042361917,Toby)
     (2.2030534980335528,Jack Matthews)

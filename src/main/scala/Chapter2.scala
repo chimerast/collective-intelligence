@@ -435,7 +435,7 @@ object Chapter2 extends App {
     val usersim = calculateSimilarUsers(critics)
     usersim.foreach(output)
     val itemPrefs = transformPrefs(critics)
-    subsection("Lady in the Waterを見ていない人で高い評価をつけそうな人を")
+    subsection("Just My Luckを見ていない人で高い評価をつけそうな人を")
     getRecommendedUsers(itemPrefs, usersim, "Just My Luck").foreach(output)
   }
 }
