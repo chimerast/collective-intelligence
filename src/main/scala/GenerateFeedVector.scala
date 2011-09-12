@@ -1,10 +1,15 @@
-import scala.collection.mutable._
-import scala.io.Source
-import Utils._
 import java.io.PrintWriter
-import java.io.FileWriter
+
+import scala.collection.mutable.Map
+import scala.io.Codec
+import scala.io.Source
+
+import Utils.using
 
 object GenerateFeedVector extends App {
+  implicit val codec = Codec.string2codec("UTF-8")
+
+  generate()
 
   def generate(infile: String = "feedlist.txt", outfile: String = "blogdata.txt"): Unit = {
     val apcount = Map[String, Int]().withDefaultValue(0)
@@ -32,7 +37,7 @@ object GenerateFeedVector extends App {
       if frac > 0.1 && frac < 0.5
     ) yield w
 
-    using(new PrintWriter(new FileWriter(outfile))) { out =>
+    using(new PrintWriter(outfile, "UTF-8")) { out =>
       out.print("Blog")
       wordlist.foreach(word => out.print("\t%s".format(word)))
       out.println()
