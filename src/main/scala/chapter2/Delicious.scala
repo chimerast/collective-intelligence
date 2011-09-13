@@ -1,12 +1,14 @@
+package chapter2
+
 import scala.collection.JavaConversions._
 import scala.io._
 import scala.util.parsing.json._
 
 import java.{ util => ju }
 
-object Delicious {
-  import Utils._
+import util._
 
+object Delicious {
   val DLCS_RSS = "http://feeds.delicious.com/v2/json/"
 
   val PARAM_USER = "a"

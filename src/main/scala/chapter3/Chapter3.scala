@@ -1,9 +1,11 @@
+package chapter3
+
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.Map
 import scala.io._
 import scala.math._
-import scala.collection.mutable.Map
-import scala.collection.mutable.ArrayBuffer
 
-import Section._
+import util._
 
 object Chapter3 extends App {
   implicit val codec = Codec.string2codec("UTF-8")

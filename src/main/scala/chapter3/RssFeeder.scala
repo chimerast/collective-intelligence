@@ -1,10 +1,13 @@
-import java.net.URL
+package chapter3
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable.Map
-import com.sun.syndication.feed.synd.SyndEntry
-import com.sun.syndication.io.SyndFeedInput
-import com.sun.syndication.io.XmlReader
-import com.sun.syndication.feed.synd.SyndContent
+
+import java.net._
+
+import com.sun.syndication.feed.synd._
+import com.sun.syndication.io._
+import util._
 
 object RssFeeder extends App {
   def getWordCounts(url: String): (String, Map[String, Int]) = {

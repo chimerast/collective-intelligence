@@ -1,10 +1,12 @@
+package chapter2
+
 import scala.collection.mutable._
 import scala.collection.JavaConversions._
 import scala.io._
 import scala.math._
 import scala.util._
-import Section._
-import Utils._
+
+import util._
 
 object Chapter2 extends App {
   val critics = Map(
@@ -160,11 +162,9 @@ object Chapter2 extends App {
     getRecommendations(movies, "Just My Luck").foreach(output)
   }
 
-  import Delicious._
-
   section("2.6.1 del.icio.usのAPI") {
     subsection("programmingに関する人気のブックマーク")
-    getPopular("programming").take(5).foreach(output)
+    Delicious.getPopular("programming").take(5).foreach(output)
   }
 
   /**
@@ -172,7 +172,7 @@ object Chapter2 extends App {
    */
   def initializeUserDict(tag: String, count: Int = 5): List[String] = {
     // popularな投稿をcount番目まで取得
-    val users = for (p1 <- getPopular(tag, count); p2 <- getUrlPosts(p1(Delicious.PARAM_URL)))
+    val users = for (p1 <- Delicious.getPopular(tag, count); p2 <- Delicious.getUrlPosts(p1(Delicious.PARAM_URL)))
       yield p2(Delicious.PARAM_USER)
     users.toSet.toList
   }
@@ -185,7 +185,7 @@ object Chapter2 extends App {
 
     // すべてのユーザによって投稿されたリンクを取得
     val userDict = Map(users.map { user =>
-      val dict = getUserPosts(user).map { post =>
+      val dict = Delicious.getUserPosts(user).map { post =>
         val url = post(Delicious.PARAM_URL)
         allItems += url
         url -> 1.0
@@ -358,7 +358,7 @@ object Chapter2 extends App {
    */
   def initializeTagDict(tag: String, count: Int = 5): List[String] = {
     // popularな投稿をcount番目まで取得
-    val tags = for (p1 <- getPopular(tag, count); p2 <- getUrlPosts(p1(Delicious.PARAM_URL)))
+    val tags = for (p1 <- Delicious.getPopular(tag, count); p2 <- Delicious.getUrlPosts(p1(Delicious.PARAM_URL)))
       yield p2(Delicious.PARAM_TAGS).split("\\|").filter(""!=)
     tags.flatten.toSet.toList
   }
@@ -371,7 +371,7 @@ object Chapter2 extends App {
 
     // すべてのタグがついたリンクを取得
     val tagDict = Map(tags.map { tag =>
-      val dict = getPopular(tag).map { post =>
+      val dict = Delicious.getPopular(tag).map { post =>
         val url = post(Delicious.PARAM_URL)
         allItems += url
         url -> 1.0

@@ -1,5 +1,6 @@
+package util
+
 import java.io._
-import Utils._
 
 object DiskStore {
   def load[T](loader: => T, id: String): T = {

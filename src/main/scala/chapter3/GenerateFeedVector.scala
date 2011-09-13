@@ -1,10 +1,11 @@
-import java.io.PrintWriter
+package chapter3
 
 import scala.collection.mutable.Map
-import scala.io.Codec
-import scala.io.Source
+import scala.io._
 
-import Utils.using
+import java.io._
+
+import util._
 
 object GenerateFeedVector extends App {
   implicit val codec = Codec.string2codec("UTF-8")

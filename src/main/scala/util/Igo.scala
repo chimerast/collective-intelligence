@@ -1,3 +1,5 @@
+package util
+
 import net.reduls.igo.Tagger
 import scala.collection.JavaConversions._
 import net.reduls.igo.Morpheme
