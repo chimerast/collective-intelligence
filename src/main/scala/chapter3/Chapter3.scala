@@ -7,7 +7,7 @@ import scala.math._
 
 import util._
 
-object Chapter3 extends App {
+object Chapter3 { // extends App {
   implicit val codec = Codec.string2codec("UTF-8")
 
   // 評価関数
@@ -112,10 +112,11 @@ object Chapter3 extends App {
     clust.left.foreach(printclust(_, labels, n + 1))
     clust.right.foreach(printclust(_, labels, n + 1))
   }
-
+  /*
   section("3.3 階層的クラスタリング") {
     val (blognames, words, data) = readfile()
     val clust = hcluster(data)
     printclust(clust, Some(blognames))
   }
+*/
 }
