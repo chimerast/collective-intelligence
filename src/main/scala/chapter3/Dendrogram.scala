@@ -5,10 +5,13 @@ import scala.math._
 
 import java.awt.Color
 
-object Dendrogram extends SimpleSwingApplication {
-  val (blognames, words, data) = BiCluster.readfile()
-  val clust = BiCluster.hcluster(data)
+object Dendrogram {
+  def apply(clust: BiCluster, label: Array[String]): Unit = {
+    Swing.onEDT { new Dendrogram(clust, label) startup (Array[String]()) }
+  }
+}
 
+class Dendrogram(clust: BiCluster, labels: Array[String]) extends SimpleSwingApplication {
   // 高さと幅
   val h = getheight(clust) * 20
   val w = 1200.0
@@ -27,7 +30,7 @@ object Dendrogram extends SimpleSwingApplication {
         override def paint(g: Graphics2D): Unit = {
           g.setColor(Color.BLUE)
           g.drawLine(0.0, h / 2, 10.0, h / 2)
-          drawnode(g, clust, 10, h / 2, scaling, blognames)
+          drawnode(g, clust, 10, h / 2, scaling, labels)
         }
       })
     }

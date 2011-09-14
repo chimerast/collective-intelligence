@@ -9,24 +9,8 @@ import java.util.Arrays
 case class BiCluster(vec: Array[Double], id: Int, left: Option[BiCluster] = None, right: Option[BiCluster] = None, distance: Double = 0.0)
 
 object BiCluster {
-  implicit val codec = Codec.string2codec("UTF-8")
-
   // 評価関数
   type Distance = (Array[Double], Array[Double]) => Double
-
-  def readfile(filename: String = "blogdata.txt"): (Array[String], Array[String], Array[Array[Double]]) = {
-    val lines = Source.fromFile(filename).getLines
-
-    val colnames = lines.next().split("\\t").drop(1)
-    val (rownames, data) = lines.map { line =>
-      val p = line.split("\\t")
-      (p(0), p.drop(1).map(_.toDouble))
-    }.foldRight(Array[String](), Array[Array[Double]]()) {
-      case (a, b) => (a._1 +: b._1, a._2 +: b._2)
-    }
-
-    (rownames, colnames, data)
-  }
 
   def pearson(v1: Array[Double], v2: Array[Double]): Double = {
     val n = v1.size
@@ -48,6 +32,14 @@ object BiCluster {
     if (den == 0.0) return 0.0
 
     1.0 - num / den
+  }
+
+  def tanimoto(v1: Array[Double], v2: Array[Double]): Double = {
+    val c1 = v1.filter(0.0!=).size
+    val c2 = v2.filter(0.0!=).size
+    val shr = (v1 zip v2).filter { case (i1, i2) => i1 != 0.0 && i2 != 0.0 }.size
+
+    1.0 - (shr.toDouble / (c1 + c2 - shr))
   }
 
   def hcluster(rows: Array[Array[Double]], distance: Distance = pearson): BiCluster = {
@@ -73,7 +65,7 @@ object BiCluster {
       }
 
       // 二つのクラスタの平均を計算する
-      val mergevec = clust(lowestpair._1).vec.zip(clust(lowestpair._2).vec).map { case (i1, i2) => (i1 + i2) / 2.0 }
+      val mergevec = (clust(lowestpair._1).vec zip clust(lowestpair._2).vec).map { case (i1, i2) => (i1 + i2) / 2.0 }
 
       // 新たなクラスタを作る
       val newcluster = BiCluster(mergevec, currentclusterid,
