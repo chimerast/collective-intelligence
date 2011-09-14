@@ -6,10 +6,8 @@ import scala.math._
 import java.awt.Color
 
 object Dendrogram extends SimpleSwingApplication {
-  import Chapter3._
-
-  val (blognames, words, data) = readfile()
-  val clust = hcluster(data)
+  val (blognames, words, data) = BiCluster.readfile()
+  val clust = BiCluster.hcluster(data)
 
   // 高さと幅
   val h = getheight(clust) * 20
