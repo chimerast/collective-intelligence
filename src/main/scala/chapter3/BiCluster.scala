@@ -4,6 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Map
 import scala.io._
 import scala.math._
+import java.util.Arrays
 
 case class BiCluster(vec: Array[Double], id: Int, left: Option[BiCluster] = None, right: Option[BiCluster] = None, distance: Double = 0.0)
 
@@ -88,6 +89,43 @@ object BiCluster {
     }
 
     clust(0)
+  }
+
+  def kcluster(rows: Array[Array[Double]], distance: Distance = pearson, k: Int = 4): Array[Array[Int]] = {
+    val centers = 0 until k
+    // それぞれのポイントの最小値と最大値を決める
+    val ranges = rows(0).indices.map { i => (rows.map(_(i)).min, rows.map(_(i)).max) }.toArray
+    // 重心をランダムにk個配置する
+    val clusters = centers.map { j => ranges.map { case (min, max) => random * (max - min) + min }.toArray }.toArray
+
+    var lastmatches = Array[ArrayBuffer[Int]]()
+
+    for (t <- 0 until 100) {
+      println("Iteration %d".format(t))
+      val bestmatches = centers.map(i => ArrayBuffer[Int]()).toArray
+
+      // それぞれの行に対して、もっとも近い重心を探し出す
+      rows.zipWithIndex.foreach {
+        case (row, j) =>
+          var bestmatch = clusters.zipWithIndex.minBy { case (cluster, _) => distance(cluster, row) }._2
+          bestmatches(bestmatch) += j
+      }
+
+      // 結果が前回と同じであれば終了
+      if (bestmatches.sameElements(lastmatches))
+        return lastmatches.map(_.toArray)
+      lastmatches = bestmatches
+
+      // 重心をそのメンバーの平均に移動する
+      centers.foreach { i =>
+        val cluster = bestmatches(i).map(rows)
+        if (cluster.size > 0) {
+          clusters(i) = rows(0).indices.map { j => cluster.map(_(j)).sum / cluster.size }.toArray
+        }
+      }
+    }
+
+    lastmatches.map(_.toArray)
   }
 
   def printclust(clust: BiCluster, labels: Option[Array[String]] = None, n: Int = 0): Unit = {
