@@ -204,7 +204,7 @@ object Chapter2 extends App {
   val delusers = section("2.6.2 データセットを作る") {
     subsection("del.icio.usからprogrammingタグの人気のURLをブックマークしたユーザを抜いてくる")
     val users = initializeUserDict("programming", 3)
-    output(users.take(5).mkString("List(", ",", ")"))
+    output(users.take(5).mkString("List(", ", ", ", ...)"))
     val delusers = fillItems(users)
     delusers.take(5).foreach(m => output(m._1 + ": " + m._2.take(5).mkString("Map(", ", ", ", ...)")))
     delusers
@@ -390,7 +390,7 @@ object Chapter2 extends App {
   section("2.10.2 タグの類似性") {
     subsection("del.icio.usからprogrammingタグの人気のURLについているタグを抜いてくる")
     val tags = initializeTagDict("programming", 3)
-    output(tags.take(5).mkString("List(", ",", ")"))
+    output(tags.take(5).mkString("List(", ", ", ", ...)"))
     val deltags = fillItemsByTag(tags)
     deltags.take(5).foreach(m => output(m._1 + ": " + m._2.take(5).mkString("Map(", ", ", ", ...)")))
     subsection("referenceに似たタグを探す")

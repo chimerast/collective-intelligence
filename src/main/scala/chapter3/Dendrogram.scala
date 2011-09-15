@@ -6,12 +6,14 @@ import scala.math._
 import java.awt.Color
 
 object Dendrogram {
-  def apply(clust: BiCluster, label: Array[String]): Unit = {
-    Swing.onEDT { new Dendrogram(clust, label) startup (Array[String]()) }
+  def apply(clust: BiCluster, labels: Array[String]): Unit = {
+    Swing.onEDT { new Dendrogram(clust, labels) startup (Array[String]()) }
   }
 }
 
 class Dendrogram(clust: BiCluster, labels: Array[String]) extends SimpleSwingApplication {
+  import util.Graphics._
+
   // 高さと幅
   val h = getheight(clust) * 20
   val w = 1200.0
@@ -35,16 +37,6 @@ class Dendrogram(clust: BiCluster, labels: Array[String]) extends SimpleSwingApp
       })
     }
   }
-
-  class WrappedGraphics2D(g: Graphics2D) {
-    def drawLine(x1: Double, y1: Double, x2: Double, y2: Double): Unit =
-      g.drawLine(x1.toInt, y1.toInt, x2.toInt, y2.toInt)
-
-    def drawString(str: String, x: Double, y: Double): Unit =
-      g.drawString(str, x.toInt, y.toInt)
-  }
-
-  implicit def wrapGraphics2D(g: Graphics2D): WrappedGraphics2D = new WrappedGraphics2D(g)
 
   def drawnode(g: Graphics2D, clust: BiCluster, x: Double, y: Double, scaling: Double, labels: Array[String]): Unit = {
     (clust.left, clust.right) match {

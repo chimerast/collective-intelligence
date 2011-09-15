@@ -49,4 +49,10 @@ object Chapter3 extends App {
     val clust = BiCluster.hcluster(data, distance = BiCluster.tanimoto)
     Dendrogram(clust, wants)
   }
+
+  section("3.8 データを2次元で見る") {
+    val (blognames, words, data) = readfile("blogdata.txt")
+    val coords = MDScaling.scaledown(data)
+    MDScaling(coords, blognames)
+  }
 }
