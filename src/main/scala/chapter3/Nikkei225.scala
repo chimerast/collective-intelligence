@@ -34,7 +34,7 @@ object Nikkei225 extends App {
     q.list.toMap
   }
 
-  val start = new LocalDate(2011, 6, 1)
+  val start = new LocalDate(2011, 4, 1)
   val end = new LocalDate(2011, 7, 1).minusDays(1)
 
   val map = (for (code <- nikkei225) yield {
