@@ -3,10 +3,12 @@ package util
 import java.io._
 
 object DiskStore {
-  def load[T](loader: => T, id: String): T = {
+  def load[T](loader: => T, id: String, reload: Boolean = false): T = {
     val filename = "stored$" + md5(id) + ".dat"
     val tmpdir = System.getProperty("java.io.tmpdir")
     val file = new File(tmpdir, filename)
+
+    if (reload) file.delete
 
     try {
       loadData(file)
