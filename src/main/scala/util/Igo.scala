@@ -11,7 +11,7 @@ object Igo {
     tagger.parse(str).toList
   }
 
-  val DIGIT_PUNCT = """[\p{Digit}\p{Punct}]+""".r
+  val DIGIT_PUNCT = """[\p{Digit}\p{Punct}０-９]+""".r
 
   def detectNoun(str: String): List[String] = {
     parse(str).filter(_.feature.startsWith("名詞,")).filter {

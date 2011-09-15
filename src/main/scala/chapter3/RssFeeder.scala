@@ -9,7 +9,7 @@ import com.sun.syndication.feed.synd._
 import com.sun.syndication.io._
 import util._
 
-object RssFeeder extends App {
+object RssFeeder {
   def getWordCounts(url: String): (String, Map[String, Int]) = {
     val rss = new SyndFeedInput().build(new XmlReader(new URL(url)))
     val wc = Map[String, Int]().withDefaultValue(0)

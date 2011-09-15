@@ -35,7 +35,7 @@ object GenerateFeedVector extends App {
     val wordlist = for (
       (w, bc) <- apcount;
       frac = bc.toDouble / feedcount;
-      if frac > 0.1 && frac < 0.5
+      if frac > 0.05 && frac < 0.7
     ) yield w
 
     using(new PrintWriter(outfile, "UTF-8")) { out =>
