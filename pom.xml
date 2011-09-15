@@ -21,24 +21,51 @@
       <version>${scala.version}</version>
     </dependency>
 
+    <!-- RSS解析 -->
     <dependency>
       <groupId>rome</groupId>
       <artifactId>rome</artifactId>
       <version>1.0</version>
     </dependency>
 
+    <!-- 形態素解析器 -->
     <dependency>
       <groupId>jp.sourceforge.igo</groupId>
       <artifactId>igo</artifactId>
       <version>0.4.3</version>
     </dependency>
 
+    <!-- HTMLスクレイパー -->
     <dependency>
       <groupId>jaxen</groupId>
       <artifactId>jaxen-jericho</artifactId>
       <version>1.1.1</version>
     </dependency>
-    
+
+    <!-- DBアクセス -->
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.16</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scalaquery</groupId>
+      <artifactId>scalaquery_2.9.0-1</artifactId>
+      <version>0.9.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.joda</groupId>
+      <artifactId>joda-convert</artifactId>
+      <version>1.1</version>
+    </dependency>
+
+    <!-- ロギング無効化 -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-nop</artifactId>
