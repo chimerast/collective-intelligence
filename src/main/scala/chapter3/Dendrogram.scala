@@ -2,40 +2,45 @@ package chapter3
 
 import scala.swing._
 import scala.math._
-
 import java.awt.Color
+import java.awt.image.BufferedImage
+import java.io.FileOutputStream
+import javax.imageio.ImageIO
+import java.awt.RenderingHints
 
 object Dendrogram {
   def apply(clust: BiCluster, labels: Array[String]): Unit = {
     Swing.onEDT { new Dendrogram(clust, labels) startup (Array[String]()) }
   }
-}
 
-class Dendrogram(clust: BiCluster, labels: Array[String]) extends SimpleSwingApplication {
+  def save(clust: BiCluster, labels: Array[String], filename: String): Unit = {
+    // 高さと幅
+    val h = getheight(clust) * 20
+    val w = 1200.0
+    val depth = getdepth(clust)
+
+    // 幅は固定されているため、適宜縮尺する
+    val scaling = (w - 150).toDouble / depth
+
+    val image = new BufferedImage(w.toInt, h.toInt, BufferedImage.TYPE_3BYTE_BGR)
+
+    val g = image.getGraphics.asInstanceOf[Graphics2D]
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+    g.setColor(Color.WHITE)
+    g.fillRect(0, 0, image.getWidth, image.getHeight)
+    drawtree(g, clust, h, scaling, labels)
+    g.dispose
+
+    ImageIO.write(image, "png", new FileOutputStream(filename))
+  }
+
   import util.Graphics._
 
-  // 高さと幅
-  val h = getheight(clust) * 20
-  val w = 1200.0
-  val depth = getdepth(clust)
-
-  // 幅は固定されているため、適宜縮尺する
-  val scaling = (w - 150).toDouble / depth
-
-  def top = new MainFrame {
-    background = Color.WHITE
-    resizable = true
-    contents = new ScrollPane() {
-      preferredSize = new Dimension(w.toInt, 800)
-      viewportView = Some(new Component() {
-        preferredSize = new Dimension(w.toInt, h.toInt)
-        override def paint(g: Graphics2D): Unit = {
-          g.setColor(Color.BLUE)
-          g.drawLine(0.0, h / 2, 10.0, h / 2)
-          drawnode(g, clust, 10, h / 2, scaling, labels)
-        }
-      })
-    }
+  def drawtree(g: Graphics2D, clust: BiCluster, h: Double, scaling: Double, labels: Array[String]): Unit = {
+    g.setColor(Color.BLUE)
+    g.drawLine(0.0, h / 2, 10.0, h / 2)
+    drawnode(g, clust, 10, h / 2, scaling, labels)
   }
 
   def drawnode(g: Graphics2D, clust: BiCluster, x: Double, y: Double, scaling: Double, labels: Array[String]): Unit = {
@@ -87,6 +92,32 @@ class Dendrogram(clust: BiCluster, labels: Array[String]) extends SimpleSwingApp
       case _ =>
         // 終端への距離は0
         0.0
+    }
+  }
+}
+
+class Dendrogram(clust: BiCluster, labels: Array[String]) extends SimpleSwingApplication {
+  import Dendrogram._
+
+  // 高さと幅
+  val h = getheight(clust) * 20
+  val w = 1200.0
+  val depth = getdepth(clust)
+
+  // 幅は固定されているため、適宜縮尺する
+  val scaling = (w - 150).toDouble / depth
+
+  def top = new MainFrame {
+    background = Color.WHITE
+    resizable = true
+    contents = new ScrollPane() {
+      preferredSize = new Dimension(w.toInt, 800)
+      viewportView = Some(new Component() {
+        preferredSize = new Dimension(w.toInt, h.toInt)
+        override def paint(g: Graphics2D): Unit = {
+          drawtree(g, clust, h, scaling, labels)
+        }
+      })
     }
   }
 }

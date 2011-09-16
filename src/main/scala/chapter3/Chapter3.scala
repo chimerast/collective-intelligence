@@ -46,12 +46,6 @@ object Chapter3 extends App {
     }
   }
 
-  section("3.7 嗜好のクラスタ") {
-    val (wants, people, data) = readfile("zebo.txt")
-    val clust = BiCluster.hcluster(data, distance = BiCluster.tanimoto)
-    Dendrogram(clust, wants)
-  }
-
   section("3.8 データを2次元で見る") {
     val (blognames, words, data) = readfile(input)
     val coords = MDScaling.scaledown(data)
