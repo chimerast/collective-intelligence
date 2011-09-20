@@ -21,45 +21,38 @@ import org.scalaquery.ql.extended.{ ExtendedTable => Table }
 import org.scalaquery.ql.extended.H2Driver.Implicit._
 
 object Crawler extends App {
-  // val dburl = "jdbc:h2:mem:?ignorecase=true"
   val dburl = "jdbc:h2:/data/h2/searchindex"
-
-  // new DataAccess(dburl).createIndexTables
 
   val crawler = new Crawler(dburl)
   crawler.dao.db withSession {
-    //crawler.dao.createIndexTables
-    //println(crawler.dao.getUrlId("http://chimera.st/"))
-    crawler.crawl(List("http://kiwitobes.com/wiki/Perl.html"))
+    // crawler.dao.createIndexTables
+    crawler.crawl(List("http://kiwitobes.com/wiki/Categorical_list_of_programming_languages.html"))
   }
-  //.crawl(List("http://kiwitobes.com/wiki/Perl.html"))
 }
 
 class Crawler(dburl: String) {
   protected val logger = LoggerFactory.getLogger(getClass)
-
-  implicit val codec = Codec.string2codec("UTF-8")
+  private val ignoreWords = Set("the", "of", "to", "and", "a", "in", "is", "it")
 
   val dao = new DataAccess(dburl)
 
   def addToIndex(url: String, segment: Segment): Unit = {
     if (isIndexed(url)) return
 
-    println("Indexing %s".format(url))
+    println("Indexing %s" format url)
 
     // 個々の単語を取得する
     val text = getTextOnly(segment)
-    val words = Igo.parse(text)
+    val words = separateWords(text)
 
     // URL idを取得する
     val urlId = dao.getUrlId(url)
 
     // それぞれの単語と、このurlのリンク
     words.zipWithIndex.collect {
-      case (word, i) if word._2 == "名詞" =>
-        val wordId = dao.getWordId(word._1)
+      case (word, i) if !ignoreWords.contains(word) =>
+        val wordId = dao.getWordId(word)
         dao.insertWordLocation(urlId, wordId, i)
-        println(word._1)
     }
   }
 
@@ -67,11 +60,30 @@ class Crawler(dburl: String) {
     segment.getTextExtractor.toString
   }
 
+  def separateWords(text: String): List[String] = {
+    text.split("\\W+").filter(""!=).map(_.toLowerCase).toList
+  }
+
   def isIndexed(url: String): Boolean = {
-    false
+    dao.isIndexed(url)
   }
 
   def addLinkRef(urlFrom: String, urlTo: String, linkText: String): Unit = {
+    val words = separateWords(linkText)
+
+    val fromId = dao.getUrlId(urlFrom)
+    val toId = dao.getUrlId(urlTo)
+
+    if (fromId == toId)
+      return
+
+    val linkId = dao.insertLink(fromId, toId)
+
+    words.collect {
+      case word if !ignoreWords.contains(word) =>
+        val wordId = dao.getWordId(word)
+        dao.insertLinkWords(linkId, wordId)
+    }
   }
 
   def crawl(pages: List[String], depth: Int = 2): Unit = {
@@ -80,8 +92,8 @@ class Crawler(dburl: String) {
 
     val newpages = pages.flatMap { page =>
       try {
-        val uri = new URI(page)
         val html = HtmlScraper(page)
+        val uri = new URI(page)
 
         addToIndex(page, html)
 
@@ -98,92 +110,11 @@ class Crawler(dburl: String) {
         }.flatten
       } catch {
         case e =>
-          logger.warn("Could not open %s".format(page))
+          logger.warn("Could not open %s" format page, e)
           List()
       }
     }
 
     crawl(newpages, depth - 1)
   }
-}
-
-class DataAccess(dburl: String) {
-  val db = Database.forURL(dburl, driver = "org.h2.Driver")
-
-  private val scopeIdentity = SimpleFunction.nullary[Int]("scope_identity")
-
-  def createIndexTables(): Unit = {
-    (URLList.ddl ++
-      WordList.ddl ++
-      WordLocation.ddl ++
-      Link.ddl ++
-      LinkWords.ddl).create
-  }
-
-  def getUrlId(url: String): Int = {
-    val q = for (u <- URLList if u.url === url) yield u.id
-    val ret = q.list
-    if (!ret.isEmpty) {
-      ret.head
-    } else {
-      URLList.url insert (url)
-      Query(scopeIdentity).first
-    }
-  }
-
-  def getWordId(word: String): Int = {
-    val q = for (w <- WordList if w.word === word) yield w.id
-    val ret = q.list
-    if (!ret.isEmpty) {
-      ret.head
-    } else {
-      WordList.word insert (word)
-      Query(scopeIdentity).first
-    }
-  }
-
-  def insertWordLocation(urlId: Int, wordId: Int, location: Int): Unit = {
-    WordLocation.insert(urlId, wordId, location)
-  }
-}
-
-object URLList extends Table[(Int, String)]("urllist") {
-  def id = column[Int]("id", O AutoInc, O PrimaryKey)
-  def url = column[String]("url")
-  def * = id ~ url
-}
-
-object WordList extends Table[(Int, String)]("wordlist") {
-  def id = column[Int]("id", O AutoInc, O PrimaryKey)
-  def word = column[String]("word")
-  def * = id ~ word
-}
-
-object WordLocation extends Table[(Int, Int, Int)]("wordlocation") {
-  def urlId = column[Int]("url_id")
-  def wordId = column[Int]("word_id")
-  def location = column[Int]("location")
-  def * = urlId ~ wordId ~ location
-
-  def urlList = foreignKey("fk_wordlication_url_id", urlId, URLList)(_.id)
-  def wordList = foreignKey("fk_wordlication_word_id", wordId, WordList)(_.id)
-}
-
-object Link extends Table[(Int, Int, Int)]("link") {
-  def id = column[Int]("id", O AutoInc, O PrimaryKey)
-  def fromId = column[Int]("from_id")
-  def toId = column[Int]("to_id")
-  def * = id ~ fromId ~ toId
-
-  def fromUrlList = foreignKey("fk_link_from_id", fromId, URLList)(_.id)
-  def toUrlList = foreignKey("fk_link_to_id", toId, URLList)(_.id)
-}
-
-object LinkWords extends Table[(Int, Int)]("linkwords") {
-  def wordId = column[Int]("word_id")
-  def linkId = column[Int]("link_id")
-  def * = wordId ~ linkId
-
-  def wordList = foreignKey("fk_linkwords_word_id", wordId, WordList)(_.id)
-  def link = foreignKey("fk_linkwords_link_id", linkId, Link)(_.id)
 }
