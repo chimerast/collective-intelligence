@@ -33,7 +33,12 @@ class DataAccess(dburl: String) {
       LinkWords.ddl).create
   }
 
-  def getUrlId(url: String): Int = {
+  def getUrl(id: Int): String = {
+    val q = for (u <- URLList if u.id === id) yield u.url
+    q.first
+  }
+
+  def getOrCreateUrlId(url: String): Int = {
     val q = for (u <- URLList if u.url === url) yield u.id
     q.firstOption match {
       case Some(id) =>
@@ -44,9 +49,13 @@ class DataAccess(dburl: String) {
     }
   }
 
-  def getWordId(word: String): Int = {
+  def getWordId(word: String): Option[Int] = {
     val q = for (w <- WordList if w.word === word) yield w.id
-    q.firstOption match {
+    q.firstOption
+  }
+
+  def getOrCreateWordId(word: String): Int = {
+    getWordId(word) match {
       case Some(id) =>
         id
       case None =>

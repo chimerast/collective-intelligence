@@ -21,11 +21,11 @@ import org.scalaquery.ql.extended.{ ExtendedTable => Table }
 import org.scalaquery.ql.extended.H2Driver.Implicit._
 
 object Crawler extends App {
-  val dburl = "jdbc:h2:/data/h2/searchindex"
+  val dburl = "jdbc:h2:/data/h2/searchindex;ignorecase=true"
 
   val crawler = new Crawler(dburl)
   crawler.dao.db withSession {
-    // crawler.dao.createIndexTables
+    crawler.dao.createIndexTables
     crawler.crawl(List("http://kiwitobes.com/wiki/Categorical_list_of_programming_languages.html"))
   }
 }
@@ -46,12 +46,12 @@ class Crawler(dburl: String) {
     val words = separateWords(text)
 
     // URL idを取得する
-    val urlId = dao.getUrlId(url)
+    val urlId = dao.getOrCreateUrlId(url)
 
     // それぞれの単語と、このurlのリンク
     words.zipWithIndex.collect {
       case (word, i) if !ignoreWords.contains(word) =>
-        val wordId = dao.getWordId(word)
+        val wordId = dao.getOrCreateWordId(word)
         dao.insertWordLocation(urlId, wordId, i)
     }
   }
@@ -71,8 +71,8 @@ class Crawler(dburl: String) {
   def addLinkRef(urlFrom: String, urlTo: String, linkText: String): Unit = {
     val words = separateWords(linkText)
 
-    val fromId = dao.getUrlId(urlFrom)
-    val toId = dao.getUrlId(urlTo)
+    val fromId = dao.getOrCreateUrlId(urlFrom)
+    val toId = dao.getOrCreateUrlId(urlTo)
 
     if (fromId == toId)
       return
@@ -81,7 +81,7 @@ class Crawler(dburl: String) {
 
     words.collect {
       case word if !ignoreWords.contains(word) =>
-        val wordId = dao.getWordId(word)
+        val wordId = dao.getOrCreateWordId(word)
         dao.insertLinkWords(linkId, wordId)
     }
   }
