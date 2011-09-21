@@ -21,7 +21,7 @@ import org.scalaquery.ql.extended.{ ExtendedTable => Table }
 import org.scalaquery.ql.extended.H2Driver.Implicit._
 
 object Crawler extends App {
-  val dburl = "jdbc:h2:/data/h2/searchindex;ignorecase=true"
+  val dburl = "jdbc:h2:/data/h2/searchindex"
 
   val crawler = new Crawler(dburl)
   crawler.dao.db withSession {

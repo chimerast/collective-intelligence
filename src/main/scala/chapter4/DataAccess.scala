@@ -30,7 +30,8 @@ class DataAccess(dburl: String) {
       WordList.ddl ++
       WordLocation.ddl ++
       Link.ddl ++
-      LinkWords.ddl).create
+      LinkWords.ddl ++
+      PageRank.ddl).create
   }
 
   def getUrl(id: Int): String = {
@@ -86,6 +87,44 @@ class DataAccess(dburl: String) {
     }
     ret.isDefined
   }
+
+  def countLinkToId(toId: Int): Int = {
+    val q = for (l <- Link if l.toId === toId) yield l.id.count
+    q.first
+  }
+
+  def initPageRank(): Unit = {
+    PageRank.ddl.drop
+    PageRank.ddl.create
+
+    val q = for (u <- URLList) yield u.id ~ 1.0
+    PageRank.insert(q)
+  }
+
+  def getUrlIdList(): List[Int] = {
+    val q = for (u <- URLList) yield u.id
+    q.list
+  }
+
+  def getLinker(toId: Int): List[Int] = {
+    val q = for (l <- Link if l.toId === toId) yield l.fromId
+    q.list.toSet.toList
+  }
+
+  def getPageRank(urlId: Int): Double = {
+    val q = for (r <- PageRank if r.urlId === urlId) yield r.score
+    q.first
+  }
+
+  def countLinkFromId(fromId: Int): Int = {
+    val q = for (l <- Link if l.fromId === fromId) yield l.id.count
+    q.first
+  }
+
+  def updatePageRank(urlId: Int, score: Double): Unit = {
+    val q = for (r <- PageRank if r.urlId === urlId) yield r.score
+    q.update(score)
+  }
 }
 
 object URLList extends Table[(Int, String)]("urllist") {
@@ -127,4 +166,12 @@ object LinkWords extends Table[(Int, Int)]("linkwords") {
 
   def wordList = foreignKey("fk_linkwords_word_id", wordId, WordList)(_.id)
   def link = foreignKey("fk_linkwords_link_id", linkId, Link)(_.id)
+}
+
+object PageRank extends Table[(Int, Double)]("pagerank") {
+  def urlId = column[Int]("url_id", O PrimaryKey)
+  def score = column[Double]("score")
+  def * = urlId ~ score
+
+  def urlList = foreignKey("fk_pagerank_url_id", urlId, URLList)(_.id)
 }
