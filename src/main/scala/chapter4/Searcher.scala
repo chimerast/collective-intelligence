@@ -28,7 +28,7 @@ object Searcher extends App {
 class Searcher(dburl: String) {
   protected val logger = LoggerFactory.getLogger(getClass)
 
-  type Scoring = Array[Array[Int]] => Map[Int, Double]
+  type Scoring = (Array[Array[Int]], Array[Int]) => Map[Int, Double]
 
   val dao = new DataAccess(dburl)
 
@@ -72,7 +72,7 @@ class Searcher(dburl: String) {
   def getScoredList(rows: Array[Array[Int]], wordIds: Array[Int], scoring: List[(Double, Scoring)]): Map[Int, Double] = {
     val totalScores = Map(rows.map(row => (row(0), 0.0)): _*)
 
-    val weights = scoring.map { case (weight, scoring) => (weight, scoring(rows)) }
+    val weights = scoring.map { case (weight, scoring) => (weight, scoring(rows, wordIds)) }
 
     for ((weight, scores) <- weights; url <- totalScores.keys)
       totalScores(url) += weight * scores(url)
@@ -108,7 +108,7 @@ class Searcher(dburl: String) {
   /**
    * 単語の頻度によるスコアリング
    */
-  def frequencyScore(rows: Array[Array[Int]]): Map[Int, Double] = {
+  def frequencyScore(rows: Array[Array[Int]], wordIds: Array[Int]): Map[Int, Double] = {
     val counts = Map(rows.map(row => (row(0), 0.0)): _*)
     for (row <- rows) counts(row(0)) += 1.0
     normalizeScore(counts)
@@ -117,7 +117,7 @@ class Searcher(dburl: String) {
   /**
    * ドキュメント中での位置によるスコアリング
    */
-  def locationScore(rows: Array[Array[Int]]): Map[Int, Double] = {
+  def locationScore(rows: Array[Array[Int]], wordIds: Array[Int]): Map[Int, Double] = {
     val locations = Map(rows.map(row => (row(0), Double.PositiveInfinity)): _*)
     for (row <- rows) {
       val loc = row.drop(1).sum
@@ -130,7 +130,7 @@ class Searcher(dburl: String) {
   /**
    * 単語間の距離によるスコアリング
    */
-  def distanceScore(rows: Array[Array[Int]]): Map[Int, Double] = {
+  def distanceScore(rows: Array[Array[Int]], wordIds: Array[Int]): Map[Int, Double] = {
     // 単語が一つしか無い場合、全員が勝者！
     if (rows(0).size <= 2) return Map(rows.map(row => (row(0), 1.0)): _*)
 
@@ -148,7 +148,7 @@ class Searcher(dburl: String) {
   /**
    * インバウンドリンクを単純に数え上げる
    */
-  def inboudLinkScore(rows: Array[Array[Int]]): Map[Int, Double] = {
+  def inboudLinkScore(rows: Array[Array[Int]], wordIds: Array[Int]): Map[Int, Double] = {
     val uniqueUrls = rows.map(_(0)).toSet
     val inboundCounts = Map((uniqueUrls.map { u => (u, dao.countLinkToId(u).toDouble) }.toSeq): _*)
     normalizeScore(inboundCounts)
@@ -185,8 +185,21 @@ class Searcher(dburl: String) {
   /**
    * PageRankによるスコアリング
    */
-  def pagerankScore(rows: Array[Array[Int]]): Map[Int, Double] = {
+  def pagerankScore(rows: Array[Array[Int]], wordIds: Array[Int]): Map[Int, Double] = {
     val pageranks = Map(rows.map(row => (row(0), dao.getPageRank(row(0)))): _*)
     normalizeScore(pageranks)
+  }
+
+  /**
+   * リンクのテキストによるスコアリング
+   */
+  def linkTextScore(rows: Array[Array[Int]], wordIds: Array[Int]): Map[Int, Double] = {
+    val linkScores = Map(rows.map(row => (row(0), 0.0)): _*)
+    for (wordId <- wordIds) {
+      for ((fromId, toId) <- dao.getLink(wordId) if linkScores.contains(toId)) {
+        linkScores(toId) += dao.getPageRank(fromId)
+      }
+    }
+    normalizeScore(linkScores)
   }
 }

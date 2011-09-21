@@ -44,5 +44,9 @@ object Chapter4 extends App {
         (1.0, searcher.pagerankScore))
       searcher.query("functional programming", scoring)
     }
+
+    section("4.6.3 リンクのテキストを利用する") {
+      searcher.query("functional programming", List((1.0, searcher.linkTextScore)))
+    }
   }
 }

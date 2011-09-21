@@ -125,6 +125,14 @@ class DataAccess(dburl: String) {
     val q = for (r <- PageRank if r.urlId === urlId) yield r.score
     q.update(score)
   }
+
+  def getLink(wordId: Int): List[(Int, Int)] = {
+    val q = for (
+      w <- LinkWords if w.wordId === wordId;
+      l <- w.link
+    ) yield l.fromId ~ l.toId
+    q.list
+  }
 }
 
 object URLList extends Table[(Int, String)]("urllist") {
