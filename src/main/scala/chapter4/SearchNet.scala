@@ -76,13 +76,13 @@ class SearchNet {
     // 隠れ層の発火
     for (j <- hiddenIds.indices) {
       val sum = wordIds.indices.map(i => ai(i) * wi(i)(j)).sum
-      ah(j) = tanh(sum)
+      ah(j) = S(sum)
     }
 
     // 出力層の発火
     for (k <- urlIds.indices) {
       val sum = hiddenIds.indices.map(j => ah(j) * wo(j)(k)).sum
-      ao(k) = tanh(sum)
+      ao(k) = S(sum)
     }
 
     ao
@@ -93,22 +93,24 @@ class SearchNet {
     feedForward
   }
 
-  def dtanh(y: Double) = 1.0 - y * y
-  // def dtanh(x: Double) = 1.0 / pow(cosh(x), 2)
+  def S(x: Double) = tanh(x)
+  def dS(y: Double) = 1.0 - y * y // 1.0 - tanh(x) * tanh(x)
+  // def S(x: Double) = 1.0 / (1.0 + exp(-x))
+  // def dS(y: Double) = y * (1 - y) // S(x) * (1 - S(x))
 
   def backPropagate(targets: Array[Double], N: Double = 0.5): Unit = {
     // 出力の誤差を計算する
     val outputDeltas = Array.fill(urlIds.size)(0.0)
     for (k <- urlIds.indices) {
       val error = targets(k) - ao(k)
-      outputDeltas(k) = dtanh(ao(k)) * error
+      outputDeltas(k) = dS(ao(k)) * error
     }
 
     // 隠れ層の誤差を計算する
     val hiddenDeltas = Array.fill(hiddenIds.size)(0.0)
     for (j <- hiddenIds.indices) {
       val error = urlIds.indices.map(k => outputDeltas(k) * wo(j)(k)).sum
-      hiddenDeltas(j) = dtanh(ah(j)) * error
+      hiddenDeltas(j) = dS(ah(j)) * error
     }
 
     // 出力の重みを更新する
