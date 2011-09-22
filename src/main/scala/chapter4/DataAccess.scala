@@ -139,12 +139,16 @@ object URLList extends Table[(Int, String)]("urllist") {
   def id = column[Int]("id", O AutoInc, O PrimaryKey)
   def url = column[String]("url")
   def * = id ~ url
+
+  def urlIndex = index("urllist_url_idx", url, true)
 }
 
 object WordList extends Table[(Int, String)]("wordlist") {
   def id = column[Int]("id", O AutoInc, O PrimaryKey)
   def word = column[String]("word")
   def * = id ~ word
+
+  def wordIndex = index("wordlist_word_idx", word, true)
 }
 
 object WordLocation extends Table[(Int, Int, Int)]("wordlocation") {
@@ -155,6 +159,8 @@ object WordLocation extends Table[(Int, Int, Int)]("wordlocation") {
 
   def urlList = foreignKey("fk_wordlication_url_id", urlId, URLList)(_.id)
   def wordList = foreignKey("fk_wordlication_word_id", wordId, WordList)(_.id)
+
+  def wordIdIndex = index("wordlocation_word_id_idx", wordId, false)
 }
 
 object Link extends Table[(Int, Int, Int)]("link") {
@@ -165,6 +171,9 @@ object Link extends Table[(Int, Int, Int)]("link") {
 
   def fromUrlList = foreignKey("fk_link_from_id", fromId, URLList)(_.id)
   def toUrlList = foreignKey("fk_link_to_id", toId, URLList)(_.id)
+
+  def fromIdIndex = index("link_from_id_idx", fromId, false)
+  def toIdIndex = index("linf_to_id_idx", toId, false)
 }
 
 object LinkWords extends Table[(Int, Int)]("linkwords") {
