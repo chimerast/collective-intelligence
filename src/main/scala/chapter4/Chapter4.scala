@@ -32,7 +32,7 @@ object Chapter4 extends App {
     }
 
     section("4.6.2 PageRankアルゴリズム") {
-      //searcher.calculatePageRank()
+      searcher.calculatePageRank()
 
       // PageRankを高い順に表示
       val q = for (r <- PageRank; _ <- Query orderBy r.score.desc) yield r.*

@@ -17,14 +17,6 @@ import org.scalaquery.ql.extended.H2Driver.Implicit._
 
 import java.sql.ResultSet
 
-object Searcher extends App {
-  val dburl = "jdbc:h2:/data/h2/searchindex"
-
-  val searcher = new Searcher(dburl)
-  searcher.dao.db withSession {
-  }
-}
-
 class Searcher(dburl: String) {
   protected val logger = LoggerFactory.getLogger(getClass)
 
