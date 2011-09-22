@@ -17,12 +17,13 @@ import org.scalaquery.ql.extended.H2Driver.Implicit._
 
 import java.sql.ResultSet
 
-class Searcher(dburl: String) {
+class Searcher {
   protected val logger = LoggerFactory.getLogger(getClass)
 
   type Scoring = (Array[Array[Int]], Array[Int]) => Map[Int, Double]
 
-  val dao = new DataAccess(dburl)
+  val dao = DataAccess
+  val net = new SearchNet
 
   def getMatchRows(q: String)(implicit session: Session): (Array[Array[Int]], Array[Int]) = {
     val fieldList = new StringBuilder()
@@ -72,7 +73,7 @@ class Searcher(dburl: String) {
     totalScores
   }
 
-  def query(q: String, scoring: List[(Double, Scoring)]): Unit = {
+  def query(q: String, scoring: List[(Double, Scoring)]): (Array[Int], Array[Int]) = {
     val (rows, wordIds) = getMatchRows(q)
     val scores = getScoredList(rows, wordIds, scoring)
     val rankedScores = scores.toList.sortBy(_._2).reverse
@@ -80,6 +81,8 @@ class Searcher(dburl: String) {
     for ((urlId, score) <- rankedScores.take(10)) {
       println("%f\t%s" format (score, dao.getUrl(urlId)))
     }
+
+    (wordIds, rankedScores.take(10).map(_._1).toArray)
   }
 
   /**
@@ -193,5 +196,16 @@ class Searcher(dburl: String) {
       }
     }
     normalizeScore(linkScores)
+  }
+
+  /**
+   * ニューラルネットワークを使用したスコアリング
+   */
+  def nnScore(rows: Array[Array[Int]], wordIds: Array[Int]): Map[Int, Double] = {
+    // ユニークなURL IDをソートされたリストとして取得する
+    val urlIds = rows.map(_(0)).toSet.toArray
+    val nnRes = net.getResult(wordIds, urlIds)
+    val scores = Map(urlIds.zipWithIndex.map { case (urlId, i) => (urlId -> nnRes(i)) }: _*)
+    normalizeScore(scores)
   }
 }

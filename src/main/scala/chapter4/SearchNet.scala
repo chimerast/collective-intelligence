@@ -2,10 +2,10 @@ package chapter4
 
 import math._
 
-class SearchNet(dburl: String) {
+class SearchNet {
   import Layer._
 
-  val dao = new DataAccess(dburl)
+  val dao = DataAccess
 
   def getStrength(fromId: Int, toId: Int, layer: Layer): Double = {
     layer match {
