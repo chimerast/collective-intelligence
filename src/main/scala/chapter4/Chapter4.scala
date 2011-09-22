@@ -32,12 +32,13 @@ object Chapter4 extends App {
     }
 
     section("4.6.2 PageRankアルゴリズム") {
-      searcher.calculatePageRank()
+      // searcher.calculatePageRank()
 
-      // PageRankを高い順に表示
+      subsection("PageRankを高い順に表示")
       val q = for (r <- PageRank; _ <- Query orderBy r.score.desc) yield r.*
       q.take(5).list.map(u => (searcher.dao.getUrl(u._1), u._2)).foreach(println)
 
+      subsection("PageRankによる検索結果のスコアリング")
       val scoring = List[(Double, searcher.Scoring)](
         (1.0, searcher.locationScore),
         (1.0, searcher.frequencyScore),
@@ -47,6 +48,17 @@ object Chapter4 extends App {
 
     section("4.6.3 リンクのテキストを利用する") {
       searcher.query("functional programming", List((1.0, searcher.linkTextScore)))
+    }
+
+    val net = new SearchNet(dburl)
+    section("4.7.2 データベースのセットアップ") {
+      // (HiddenNode.ddl ++ WordHidden.ddl ++ HiddenUrl.ddl).create
+
+      net.generateHiddenNode(Array(101, 103), Array(201, 202, 203))
+      subsection("SELECT * FROM wordhidden")
+      (for (e <- WordHidden) yield e.*).foreach(println)
+      subsection("SELECT * FROM hiddenurl")
+      (for (e <- HiddenUrl) yield e.*).foreach(println)
     }
   }
 }

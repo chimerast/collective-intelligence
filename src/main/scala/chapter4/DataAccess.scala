@@ -133,6 +133,36 @@ class DataAccess(dburl: String) {
     ) yield l.fromId ~ l.toId
     q.list
   }
+
+  def getStrengthOfWordToHidden(fromId: Int, toId: Int): Option[Double] = {
+    val q = for (e <- WordHidden if e.fromId === fromId && e.toId === toId) yield e.strength
+    q.firstOption
+  }
+
+  def getStrengthOfHiddenToUrl(fromId: Int, toId: Int): Option[Double] = {
+    val q = for (e <- HiddenUrl if e.fromId === fromId && e.toId === toId) yield e.strength
+    q.firstOption
+  }
+
+  def setStrengthOfWordToHidden(fromId: Int, toId: Int, strength: Double): Unit = {
+    val q = for (e <- WordHidden if e.fromId === fromId && e.toId === toId) yield e.strength
+    if (q.update(strength) == 0) WordHidden.insert(fromId, toId, strength)
+  }
+
+  def setStrengthOfHiddenToUrl(fromId: Int, toId: Int, strength: Double): Unit = {
+    val q = for (e <- HiddenUrl if e.fromId === fromId && e.toId === toId) yield e.strength
+    if (q.update(strength) == 0) HiddenUrl.insert(fromId, toId, strength)
+  }
+
+  def hasHiddenNode(createKey: String): Boolean = {
+    val q = for (n <- HiddenNode if n.createKey === createKey) yield n.id
+    q.firstOption.isDefined
+  }
+
+  def insertHiddenNode(createKey: String): Int = {
+    (HiddenNode.createKey).insert(createKey)
+    Query(scopeIdentity).first
+  }
 }
 
 object URLList extends Table[(Int, String)]("urllist") {
@@ -191,4 +221,24 @@ object PageRank extends Table[(Int, Double)]("pagerank") {
   def * = urlId ~ score
 
   def urlList = foreignKey("fk_pagerank_url_id", urlId, URLList)(_.id)
+}
+
+object HiddenNode extends Table[(Int, String)]("hiddennode") {
+  def id = column[Int]("id", O AutoInc, O PrimaryKey)
+  def createKey = column[String]("craete_key")
+  def * = id ~ createKey
+}
+
+object WordHidden extends Table[(Int, Int, Double)]("wordhidden") {
+  def fromId = column[Int]("from_id")
+  def toId = column[Int]("to_id")
+  def strength = column[Double]("strength")
+  def * = fromId ~ toId ~ strength
+}
+
+object HiddenUrl extends Table[(Int, Int, Double)]("hiddenurl") {
+  def fromId = column[Int]("from_id")
+  def toId = column[Int]("to_id")
+  def strength = column[Double]("strength")
+  def * = fromId ~ toId ~ strength
 }
