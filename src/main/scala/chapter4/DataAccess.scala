@@ -31,7 +31,10 @@ class DataAccess(dburl: String) {
       WordLocation.ddl ++
       Link.ddl ++
       LinkWords.ddl ++
-      PageRank.ddl).create
+      PageRank.ddl ++
+      HiddenNode.ddl ++
+      WordHidden.ddl ++
+      HiddenUrl.ddl).create
   }
 
   def getUrl(id: Int): String = {
@@ -162,6 +165,18 @@ class DataAccess(dburl: String) {
   def insertHiddenNode(createKey: String): Int = {
     (HiddenNode.createKey).insert(createKey)
     Query(scopeIdentity).first
+  }
+
+  def getHiddenIds(wordIds: Array[Int], urlIds: Array[Int]): Array[Int] = {
+    val hidden1 = for (wordId <- wordIds) yield {
+      val q = for (e <- WordHidden if e.fromId === wordId) yield e.toId
+      q.list
+    }
+    val hidden2 = for (urlId <- urlIds) yield {
+      val q = for (e <- HiddenUrl if e.toId === urlId) yield e.fromId
+      q.list
+    }
+    (hidden1 ++ hidden2).flatten.toSet.toArray
   }
 }
 

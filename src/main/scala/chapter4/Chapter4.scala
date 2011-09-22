@@ -50,15 +50,24 @@ object Chapter4 extends App {
       searcher.query("functional programming", List((1.0, searcher.linkTextScore)))
     }
 
+    val (wWorld, wRiver, wBank) = (101, 102, 103)
+    val (uWorldBank, uRiver, uEarth) = (201, 202, 203)
+
     val net = new SearchNet(dburl)
     section("4.7.2 データベースのセットアップ") {
-      // (HiddenNode.ddl ++ WordHidden.ddl ++ HiddenUrl.ddl).create
+      (HiddenNode.ddl ++ WordHidden.ddl ++ HiddenUrl.ddl).drop
+      (HiddenNode.ddl ++ WordHidden.ddl ++ HiddenUrl.ddl).create
 
-      net.generateHiddenNode(Array(101, 103), Array(201, 202, 203))
+      net.generateHiddenNode(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth))
       subsection("SELECT * FROM wordhidden")
       (for (e <- WordHidden) yield e.*).foreach(println)
       subsection("SELECT * FROM hiddenurl")
       (for (e <- HiddenUrl) yield e.*).foreach(println)
+    }
+
+    section("4.7.3 フィードフォワード") {
+      println(net.getResult(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth)).mkString("Array(", ",", ")"))
+      println(net.getResult(Array(wWorld, wRiver), Array(uWorldBank, uRiver, uEarth)).mkString("Array(", ",", ")"))
     }
   }
 }
