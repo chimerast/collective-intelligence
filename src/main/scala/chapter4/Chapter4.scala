@@ -67,7 +67,23 @@ object Chapter4 extends App {
 
     section("4.7.3 フィードフォワード") {
       println(net.getResult(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth)).mkString("Array(", ",", ")"))
-      println(net.getResult(Array(wWorld, wRiver), Array(uWorldBank, uRiver, uEarth)).mkString("Array(", ",", ")"))
+    }
+
+    section("4.7.4 バックプロパゲーションによるトレーニング") {
+      net.trainQuery(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth), uWorldBank)
+      println(net.getResult(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth)).mkString("Array(", ",", ")"))
+    }
+
+    section("4.7.5 トレーニングのテスト") {
+      val allUrls = Array(uWorldBank, uRiver, uEarth)
+      for (i <- 0 until 30) {
+        net.trainQuery(Array(wWorld, wBank), allUrls, uWorldBank)
+        net.trainQuery(Array(wRiver, wBank), allUrls, uRiver)
+        net.trainQuery(Array(wWorld), allUrls, uEarth)
+      }
+      println(net.getResult(Array(wWorld, wBank), allUrls).mkString("Array(", ",", ")"))
+      println(net.getResult(Array(wRiver, wBank), allUrls).mkString("Array(", ",", ")"))
+      println(net.getResult(Array(wBank), allUrls).mkString("Array(", ",", ")"))
     }
   }
 }
