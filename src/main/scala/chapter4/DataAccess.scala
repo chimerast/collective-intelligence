@@ -20,9 +20,7 @@ import org.scalaquery.ql.TypeMapper._
 import org.scalaquery.ql.extended.{ ExtendedTable => Table }
 import org.scalaquery.ql.extended.H2Driver.Implicit._
 
-class DataAccess(dburl: String) {
-  val db = Database.forURL(dburl, driver = "org.h2.Driver")
-
+object DataAccess {
   private val scopeIdentity = SimpleFunction.nullary[Int]("scope_identity")
 
   def createIndexTables(): Unit = {

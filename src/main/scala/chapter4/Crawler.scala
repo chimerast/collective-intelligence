@@ -20,21 +20,11 @@ import org.scalaquery.ql.TypeMapper._
 import org.scalaquery.ql.extended.{ ExtendedTable => Table }
 import org.scalaquery.ql.extended.H2Driver.Implicit._
 
-object Crawler extends App {
-  val dburl = "jdbc:h2:/data/h2/searchindex"
-
-  val crawler = new Crawler(dburl)
-  crawler.dao.db withSession {
-    crawler.dao.createIndexTables
-    crawler.crawl(List("http://kiwitobes.com/wiki/Categorical_list_of_programming_languages.html"))
-  }
-}
-
-class Crawler(dburl: String) {
+class Crawler {
   protected val logger = LoggerFactory.getLogger(getClass)
   private val ignoreWords = Set("the", "of", "to", "and", "a", "in", "is", "it")
 
-  val dao = new DataAccess(dburl)
+  val dao = DataAccess
 
   def addToIndex(url: String, segment: Segment): Unit = {
     if (isIndexed(url)) return

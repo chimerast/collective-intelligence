@@ -2,10 +2,10 @@ package chapter4
 
 import math._
 
-class SearchNet(dburl: String) {
+class SearchNet {
   import Layer._
 
-  val dao = new DataAccess(dburl)
+  val dao = DataAccess
 
   def getStrength(fromId: Int, toId: Int, layer: Layer): Double = {
     layer match {
@@ -71,18 +71,18 @@ class SearchNet(dburl: String) {
 
   def feedForward: Array[Double] = {
     // 入力はクエリの単語たち
-    for (i <- 0 until wordIds.size) ai(i) = 1.0
+    for (i <- wordIds.indices) ai(i) = 1.0
 
     // 隠れ層の発火
-    for (j <- 0 until hiddenIds.size) {
-      val sum = (0 until wordIds.size).map(i => ai(i) * wi(i)(j)).sum
-      ah(j) = tanh(sum)
+    for (j <- hiddenIds.indices) {
+      val sum = wordIds.indices.map(i => ai(i) * wi(i)(j)).sum
+      ah(j) = S(sum)
     }
 
     // 出力層の発火
-    for (k <- 0 until urlIds.size) {
-      val sum = (0 until hiddenIds.size).map(j => ah(j) * wo(j)(k)).sum
-      ao(k) = tanh(sum)
+    for (k <- urlIds.indices) {
+      val sum = hiddenIds.indices.map(j => ah(j) * wo(j)(k)).sum
+      ao(k) = S(sum)
     }
 
     ao
@@ -93,7 +93,62 @@ class SearchNet(dburl: String) {
     feedForward
   }
 
-  def dtanh(x: Double) = 1.0 - x * x
+  def S(x: Double) = tanh(x)
+  def dS(y: Double) = 1.0 - y * y // 1.0 - tanh(x) * tanh(x)
+  // def S(x: Double) = 1.0 / (1.0 + exp(-x))
+  // def dS(y: Double) = y * (1 - y) // S(x) * (1 - S(x))
+
+  def backPropagate(targets: Array[Double], N: Double = 0.5): Unit = {
+    // 出力の誤差を計算する
+    val outputDeltas = Array.fill(urlIds.size)(0.0)
+    for (k <- urlIds.indices) {
+      val error = targets(k) - ao(k)
+      outputDeltas(k) = dS(ao(k)) * error
+    }
+
+    // 隠れ層の誤差を計算する
+    val hiddenDeltas = Array.fill(hiddenIds.size)(0.0)
+    for (j <- hiddenIds.indices) {
+      val error = urlIds.indices.map(k => outputDeltas(k) * wo(j)(k)).sum
+      hiddenDeltas(j) = dS(ah(j)) * error
+    }
+
+    // 出力の重みを更新する
+    for (j <- hiddenIds.indices) {
+      for (k <- urlIds.indices) {
+        val change = outputDeltas(k) * ah(j)
+        wo(j)(k) = wo(j)(k) + N * change
+      }
+    }
+
+    // 入力の重みを更新する
+    for (i <- wordIds.indices) {
+      for (j <- hiddenIds.indices) {
+        val change = hiddenDeltas(j) * ai(i)
+        wi(i)(j) = wi(i)(j) + N * change
+      }
+    }
+  }
+
+  def trainQuery(wordIds: Array[Int], urlIds: Array[Int], selectedUrl: Int): Unit = {
+    // 必要であればhidden nodeを生成する
+    generateHiddenNode(wordIds, urlIds)
+    setupNetwork(wordIds, urlIds)
+    feedForward
+
+    val targets = Array.fill(urlIds.size)(0.0)
+    targets(urlIds.indexOf(selectedUrl)) = 1.0
+    backPropagate(targets)
+    updateDatabase
+  }
+
+  def updateDatabase(): Unit = {
+    // データベースの値にセットする
+    for (i <- wordIds.indices; j <- hiddenIds.indices)
+      setStrength(wordIds(i), hiddenIds(j), WordToHidden, wi(i)(j))
+    for (j <- hiddenIds.indices; k <- urlIds.indices)
+      setStrength(hiddenIds(j), urlIds(k), HiddenToUrl, wo(j)(k))
+  }
 }
 
 object Layer extends Enumeration {

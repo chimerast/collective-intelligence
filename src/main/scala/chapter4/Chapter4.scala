@@ -12,9 +12,16 @@ import org.scalaquery.ql.extended.H2Driver.Implicit._
 
 object Chapter4 extends App {
   val dburl = "jdbc:h2:/data/h2/searchindex"
+  val db = Database.forURL(dburl, driver = "org.h2.Driver")
 
-  val searcher = new Searcher(dburl)
-  searcher.dao.db withSession {
+  val searcher = new Searcher()
+  db withSession {
+    /*
+    val crawler = new Crawler()
+    crawler.dao.createIndexTables
+    crawler.crawl(List("http://kiwitobes.com/wiki/Categorical_list_of_programming_languages.html"))
+    */
+
     section("4.5.2 単語の頻度") {
       searcher.query("functional programming", List((1.0, searcher.frequencyScore)))
     }
@@ -53,7 +60,7 @@ object Chapter4 extends App {
     val (wWorld, wRiver, wBank) = (101, 102, 103)
     val (uWorldBank, uRiver, uEarth) = (201, 202, 203)
 
-    val net = new SearchNet(dburl)
+    val net = new SearchNet()
     section("4.7.2 データベースのセットアップ") {
       (HiddenNode.ddl ++ WordHidden.ddl ++ HiddenUrl.ddl).drop
       (HiddenNode.ddl ++ WordHidden.ddl ++ HiddenUrl.ddl).create
@@ -66,8 +73,24 @@ object Chapter4 extends App {
     }
 
     section("4.7.3 フィードフォワード") {
-      println(net.getResult(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth)).mkString("Array(", ",", ")"))
-      println(net.getResult(Array(wWorld, wRiver), Array(uWorldBank, uRiver, uEarth)).mkString("Array(", ",", ")"))
+      println(net.getResult(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth)).map("%.3f" format _).mkString("Array(", ",", ")"))
+    }
+
+    section("4.7.4 バックプロパゲーションによるトレーニング") {
+      net.trainQuery(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth), uWorldBank)
+      println(net.getResult(Array(wWorld, wBank), Array(uWorldBank, uRiver, uEarth)).map("%.3f" format _).mkString("Array(", ",", ")"))
+    }
+
+    section("4.7.5 トレーニングのテスト") {
+      val allUrls = Array(uWorldBank, uRiver, uEarth)
+      for (i <- 0 until 30) {
+        net.trainQuery(Array(wWorld, wBank), allUrls, uWorldBank)
+        net.trainQuery(Array(wRiver, wBank), allUrls, uRiver)
+        net.trainQuery(Array(wWorld), allUrls, uEarth)
+      }
+      println(net.getResult(Array(wWorld, wBank), allUrls).map("%.3f" format _).mkString("Array(", ",", ")"))
+      println(net.getResult(Array(wRiver, wBank), allUrls).map("%.3f" format _).mkString("Array(", ",", ")"))
+      println(net.getResult(Array(wBank), allUrls).map("%.3f" format _).mkString("Array(", ",", ")"))
     }
   }
 }
