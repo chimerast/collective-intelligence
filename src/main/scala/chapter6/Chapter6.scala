@@ -41,7 +41,62 @@ object Chapter6 extends App {
     val cl = new Classifier(getWords)
     sampletrain(cl)
     output(cl.fprob("quick", "good"))
-    println(cl.weightedprob("money", "good", cl.fprob))
+    output(cl.weightedprob("money", "good", cl.fprob))
+    sampletrain(cl)
+    output(cl.weightedprob("money", "good", cl.fprob))
+  }
+
+  section("6.5.2 ベイズの定理の簡単な紹介") {
+    val cl = new NativeBayes(getWords)
+    sampletrain(cl)
+    output(cl.prob("quick rabbit", "good"))
+    output(cl.prob("quick rabbit", "bad"))
+  }
+
+  section("6.5.3 カテゴリの選択") {
+    val cl = new NativeBayes(getWords)
+    sampletrain(cl)
+    output(cl.classify("quick rabbit", "unknown"))
+    output(cl.classify("quick money", "unknown"))
+    cl.setThreshold("bad", 3.0)
+    output(cl.classify("quick money", "unknown"))
+    (0 until 10).foreach(_ => sampletrain(cl))
+    output(cl.classify("quick money", "unknown"))
+  }
+}
+
+class NativeBayes(getFeatures: (String) => Map[String, Int]) extends Classifier(getFeatures) {
+  val thresholds = Map[String, Double]()
+
+  def docprob(item: String, cat: String): Double = {
+    val features = getFeatures(item)
+    // すべての特徴の確率を掛け合わせる
+    features.keys.map(f => weightedprob(f, cat, fprob)).product
+  }
+
+  def prob(item: String, cat: String): Double = {
+    val cprob = catcount(cat) / totalCount
+    val dprob = docprob(item, cat)
+    dprob * cprob
+  }
+
+  def setThreshold(cat: String, t: Double): Unit = {
+    thresholds(cat) = t
+  }
+
+  def getThreshold(cat: String): Double = {
+    thresholds.getOrElse(cat, 1.0)
+  }
+
+  def classify(item: String, default: String): String = {
+    val probs = Map(categories.map(cat => cat -> prob(item, cat)): _*)
+    // もっとも確率の高いカテゴリを探す
+    val best = probs.maxBy(_._2)
+    for (cat <- probs.keys if cat != best._1) {
+      if (probs(cat) * getThreshold(best._1) > best._2)
+        return default
+    }
+    best._1
   }
 }
 
@@ -69,7 +124,7 @@ class Classifier(getFeatures: (String) => Map[String, Int]) {
 
   // あるカテゴリ中のアイテムたちの数
   def catcount(cat: String): Double = {
-    cc.get(cat).getOrElse(0.0)
+    cc.getOrElse(cat, 0.0)
   }
 
   // アイテムたちの総数
