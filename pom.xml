@@ -42,6 +42,12 @@
       <version>1.1.1.1</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-math</artifactId>
+      <version>2.2</version>
+    </dependency>
+
     <!-- DBアクセス -->
     <dependency>
       <groupId>org.scalaquery</groupId>
@@ -75,7 +81,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.6.2</version>
+      <version>1.6.4</version>
     </dependency>
   </dependencies>
 

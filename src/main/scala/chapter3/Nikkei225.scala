@@ -78,13 +78,14 @@ object CorpBasis extends Table[(Int, String)]("corp_bss") {
   def * = corpId ~ name
 }
 
-object SharePrice extends Table[(Int, Int, Int, Date, Double)]("shr_price") {
+object SharePrice extends Table[(Int, Int, Int, Date, Double, Long)]("shr_price") {
   def corpId = column[Int]("corp_id")
   def marketId = column[Int]("mkt_id")
   def chartType = column[Int]("cndl_chart_typ")
   def infoDate = column[Date]("info_date")
   def price = column[Double]("close_price_num")
-  def * = corpId ~ marketId ~ chartType ~ infoDate ~ price
+  def volume = column[Long]("trde_volm_num")
+  def * = corpId ~ marketId ~ chartType ~ infoDate ~ price ~ volume
 
   val TOSHO = 1
   val DAILY = 1
